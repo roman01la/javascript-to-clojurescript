@@ -38,6 +38,15 @@ let exampleCode = `function dist(p1, p2) {
       const apxd = Math.round(d);
       console.log("Distance is positive!", "≈" + apxd);
   }
+}
+
+// cond
+if (0 > 1) {
+	console.log("0 > 1");
+} else if (1 < 0) {
+	console.log("0 > 1");
+} else if (9 < -9) {
+	console.log("9 < -9");
 }`;
 
 if (location.hash === "#react") {

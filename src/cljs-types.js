@@ -79,6 +79,8 @@ const FN = "fn";
 const LET = "let";
 const IF = "if";
 const WHEN = "when";
+const COND = "cond";
+const NIL = "nil";
 
 module.exports = {
   program,
@@ -101,5 +103,7 @@ module.exports = {
   FN,
   LET,
   IF,
-  WHEN
+  WHEN,
+  COND,
+  NIL
 };

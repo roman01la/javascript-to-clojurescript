@@ -25,6 +25,22 @@ function takeWhile(pred, [x, ...xs], ret = []) {
   return [ret, [x, ...xs]];
 }
 
+function getCondEntries(node, ret = []) {
+  const { test, consequent, alternate } = node;
+
+  if (bt.isIfStatement(alternate)) {
+    return getCondEntries(alternate, ret.concat([test, consequent]));
+  }
+  return ret.concat([
+    test,
+    consequent,
+    ":else",
+    alternate === null ? "nil" : alternate
+  ]);
+}
+
+// ==================
+
 const transformRec = (ast, opts = {}) => {
   if (bt.isFile(ast)) {
     return transformRec(ast.program);
@@ -329,6 +345,21 @@ const transformRec = (ast, opts = {}) => {
   }
   if (bt.isIfStatement(ast)) {
     const { test, consequent, alternate } = ast;
+
+    if (bt.isIfStatement(alternate)) {
+      const entries = getCondEntries(ast);
+      return t.list([
+        t.symbol(t.COND),
+        ...entries.map(
+          n =>
+            n === ":else"
+              ? t.keyword("else")
+              : n === "nil"
+                ? t.symbol(t.NIL)
+                : transformRec(n)
+        )
+      ]);
+    }
 
     if (alternate !== null) {
       const l = t.list([t.symbol(t.IF), transformRec(test)]);
