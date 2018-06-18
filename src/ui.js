@@ -64,15 +64,14 @@ switch (1) {
 
 if (location.hash === "#react") {
   exampleCode = `function State(initial) {
-    let st = initial;
-      const listeners = [];
+  	const ctx = { st: initial, listeners: [] };
     return {
         update: (next) => {
-            st = Object.assign(st, next);
-              listeners.forEach(fn => fn(st));
-          },
-          deref: () => st,
-          listen: (f) => listeners.push(f)
+            ctx.st = Object.assign(ctx.st, next);
+            ctx.listeners.forEach(fn => fn(ctx.st));
+        },
+        deref: () => ctx.st,
+        listen: (f) => ctx.listeners.push(f)
       };
   };
   
@@ -142,8 +141,18 @@ const debounce = (t, fn) => {
   };
 };
 
+console.log = (...args) => {
+  const v = stdoutEditor.getValue();
+  stdoutEditor.setValue(v + "\n" + args.join(" "));
+};
+console.error = (...args) => {
+  const v = stdoutEditor.getValue();
+  stdoutEditor.setValue(v + "\n" + args.join(" "));
+};
+
 const handleJSChange = () => {
   stdoutEditor.setValue("");
+
   try {
     const code = js2cljs(jsEditor.getValue());
     cljsEditor.setValue(code);
@@ -153,10 +162,6 @@ const handleJSChange = () => {
       } else {
         cljsCompiledCodeEditor.setValue(code);
         window.cljs.user = {};
-        console.log = (...args) => {
-          const v = stdoutEditor.getValue();
-          stdoutEditor.setValue(v + "\n" + args.join(" "));
-        };
         try {
           eval(code);
         } catch (err) {
