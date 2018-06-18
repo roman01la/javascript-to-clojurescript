@@ -52,7 +52,7 @@ function generate(node) {
     return undefined;
   }
 
-  console.log(node);
+  console.info(node);
 }
 
 module.exports = generate;

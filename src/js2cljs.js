@@ -105,12 +105,20 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isFunctionDeclaration(ast)) {
     const { id, params, body } = ast;
 
-    return t.list([
+    const bodies = transformRec(body, { isImplicitDo: true });
+
+    const l = t.list([
       t.symbol(t.DEFN),
       transformRec(id),
-      t.vector(params.map(transformRec)),
-      transformRec(body)
+      t.vector(params.map(transformRec))
     ]);
+
+    if (Array.isArray(bodies)) {
+      l.children.push(...bodies);
+    } else {
+      l.children.push(bodies);
+    }
+    return l;
   }
   if (bt.isFunctionExpression(ast)) {
     const { id, params, body } = ast;
@@ -136,7 +144,13 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isArrowFunctionExpression(ast)) {
     const { params, body } = ast;
 
-    const bodies = [transformRec(body)];
+    let bodies;
+
+    if (ast.expression) {
+      bodies = [transformRec(body)];
+    } else {
+      bodies = transformRec(body, { isImplicitDo: true });
+    }
 
     const node = t.list([t.symbol(t.FN), t.vector(params.map(transformRec))]);
 
@@ -351,18 +365,20 @@ const transformRec = (ast, opts = {}) => {
     const { test, consequent, alternate } = ast;
 
     if (bt.isIfStatement(alternate)) {
-      const entries = getCondEntries(ast);
-      return t.list([
-        t.symbol(t.COND),
-        ...entries.map(
-          n =>
-            n === ":else"
-              ? t.keyword("else")
-              : n === "nil"
-                ? t.symbol(t.NIL)
-                : transformRec(n)
-        )
-      ]);
+      const entries = getCondEntries(ast).map(n => {
+        if (n === ":else") {
+          return t.keyword("else");
+        }
+        if (n === "nil") {
+          return t.symbol(t.NIL);
+        }
+        if (n.body && n.body.length === 1) {
+          const r = transformRec(n, { isImplicitDo: true });
+          return r[0];
+        }
+        return transformRec(n);
+      });
+      return t.list([t.symbol(t.COND), ...entries]);
     }
 
     if (alternate !== null) {
@@ -426,7 +442,7 @@ const transformRec = (ast, opts = {}) => {
     return [transformRec(test), ...csq];
   }
 
-  console.log(ast);
+  console.info(ast);
   throw new Error(`${ast.type} is not implemented`);
 };
 
