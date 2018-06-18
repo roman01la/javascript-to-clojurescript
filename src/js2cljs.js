@@ -49,6 +49,19 @@ function getDotProps(node, ret = []) {
   return [node.object, node.property, ...ret];
 }
 
+function maybeThreadMemberSyntax(node, ret = []) {
+  if (bt.isCallExpression(node)) {
+    return [
+      ...maybeThreadMemberSyntax(node.callee.object, [
+        node.callee.property || node.callee,
+        node.arguments
+      ]),
+      ret
+    ];
+  }
+  return ret;
+}
+
 // ==================
 
 const transformRec = (ast, opts = {}) => {
@@ -87,9 +100,11 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isIdentifier(ast)) {
     if (opts.isGetter) {
       return t.symbol(`-${ast.name}`);
-    } else {
-      return t.symbol(ast.name);
     }
+    if (opts.isCall) {
+      return t.symbol(`.${ast.name}`);
+    }
+    return t.symbol(ast.name);
   }
   if (bt.isNumericLiteral(ast)) {
     return t.NumericLiteral(ast.extra.raw);
@@ -164,6 +179,28 @@ const transformRec = (ast, opts = {}) => {
   }
   if (bt.isCallExpression(ast)) {
     const { callee } = ast;
+
+    const chain = maybeThreadMemberSyntax(ast).filter(r => r.length !== 0);
+
+    if (chain.length > 2) {
+      let fn;
+      const [id, args, ...entries] = chain;
+      if (window.hasOwnProperty(id.name)) {
+        fn = t.symbol(`js/${id.name}`);
+      } else {
+        fn = transformRec(id);
+      }
+      return t.list([
+        t.symbol("->"),
+        t.list([fn, ...args.map(transformRec)]),
+        ...entries.map(([id, args]) =>
+          t.list([
+            transformRec(id, { isCall: true }),
+            ...args.map(transformRec)
+          ])
+        )
+      ]);
+    }
 
     if (bt.isMemberExpression(callee)) {
       if (callee.object.name && window.hasOwnProperty(callee.object.name)) {
