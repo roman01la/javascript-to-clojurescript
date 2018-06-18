@@ -76,6 +76,9 @@ const EmptyStatement = () => ({
 const DEF = "def";
 const DEFN = "defn";
 const FN = "fn";
+const LET = "let";
+const IF = "if";
+const WHEN = "when";
 
 module.exports = {
   program,
@@ -95,5 +98,8 @@ module.exports = {
   mapEntry,
   DEF,
   DEFN,
-  FN
+  FN,
+  LET,
+  IF,
+  WHEN
 };

@@ -317,12 +317,41 @@ const transformRec = (ast, opts = {}) => {
         })
         .reduce((ret, e) => ret.concat(e), []);
       return t.list([
-        t.symbol("let"),
+        t.symbol(t.LET),
         t.vector(entries),
         ...rest.map(transformRec)
       ]);
     }
+    if (opts.isImplicitDo) {
+      return ast.body.map(transformRec);
+    }
     return t.list([t.symbol("do"), ...ast.body.map(transformRec)]);
+  }
+  if (bt.isIfStatement(ast)) {
+    const { test, consequent, alternate } = ast;
+
+    if (alternate !== null) {
+      const l = t.list([t.symbol(t.IF), transformRec(test)]);
+      if (consequent.body.length > 1) {
+        l.children.push(transformRec(consequent));
+      } else {
+        l.children.push(...transformRec(consequent, { isImplicitDo: true }));
+      }
+      if (alternate.body.length > 1) {
+        l.children.push(transformRec(alternate));
+      } else {
+        l.children.push(...transformRec(alternate, { isImplicitDo: true }));
+      }
+      return l;
+    }
+    const retWhen = t.list([t.symbol(t.WHEN), transformRec(test)]);
+    const retConseq = transformRec(consequent, { isImplicitDo: true });
+    if (Array.isArray(retConseq)) {
+      retWhen.children.push(...retConseq);
+    } else {
+      retWhen.children.push(retConseq);
+    }
+    return retWhen;
   }
 
   console.log(ast);

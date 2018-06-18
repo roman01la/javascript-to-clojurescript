@@ -26,10 +26,19 @@ let exampleCode = `function dist(p1, p2) {
   return Math.sqrt( a*a + b*b );
 }
 
-const p1 = { x: 1, y: -9 };
-const p2 = { x: -4, y: 13 };
+{ // explicit block scope
+  const p1 = { x: 1, y: -9 };
+  const p2 = { x: -4, y: 13 };
+  
+  const d = dist(p1, p2);
 
-console.log("Distance: " + dist(p1, p2));`;
+  console.log("Distance: " + d);
+  
+  if (d > 0) {
+      const apxd = Math.round(d);
+      console.log("Distance is positive!", "≈" + apxd);
+  }
+}`;
 
 if (location.hash === "#react") {
   exampleCode = `function State(initial) {
@@ -122,9 +131,9 @@ const handleJSChange = () => {
       } else {
         cljsCompiledCodeEditor.setValue(code);
         window.cljs.user = {};
-        console.log = x => {
+        console.log = (...args) => {
           const v = stdoutEditor.getValue();
-          stdoutEditor.setValue(v + "\n" + x);
+          stdoutEditor.setValue(v + "\n" + args.join(" "));
         };
         try {
           eval(code);
