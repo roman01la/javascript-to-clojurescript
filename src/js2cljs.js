@@ -18,6 +18,13 @@ function alterNestedThisExpression(name, node) {
   }
 }
 
+function takeWhile(pred, [x, ...xs], ret = []) {
+  if (pred(x)) {
+    return takeWhile(pred, xs, ret.concat(x));
+  }
+  return [ret, [x, ...xs]];
+}
+
 const transformRec = (ast, opts = {}) => {
   if (bt.isFile(ast)) {
     return transformRec(ast.program);
@@ -76,7 +83,7 @@ const transformRec = (ast, opts = {}) => {
       t.symbol(t.DEFN),
       transformRec(id),
       t.vector(params.map(transformRec)),
-      ...body.body.map(transformRec)
+      transformRec(body)
     ]);
   }
   if (bt.isFunctionExpression(ast)) {
@@ -298,6 +305,23 @@ const transformRec = (ast, opts = {}) => {
     return t.EmptyStatement();
   }
   if (bt.isBlockStatement(ast)) {
+    if (bt.isVariableDeclaration(ast.body[0])) {
+      const [decls, rest] = takeWhile(
+        n => bt.isVariableDeclaration(n),
+        ast.body
+      );
+      const entries = decls
+        .map(d => {
+          const { id, init } = d.declarations[0];
+          return [transformRec(id), transformRec(init)];
+        })
+        .reduce((ret, e) => ret.concat(e), []);
+      return t.list([
+        t.symbol("let"),
+        t.vector(entries),
+        ...rest.map(transformRec)
+      ]);
+    }
     return t.list([t.symbol("do"), ...ast.body.map(transformRec)]);
   }
 
