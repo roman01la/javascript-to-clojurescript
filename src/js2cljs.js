@@ -274,7 +274,10 @@ const transformRec = (ast, opts = {}) => {
     }
   }
   if (bt.isJSXText(ast)) {
-    return t.StringLiteral(ast.value);
+    if (ast.value.trim() !== "") {
+      return t.StringLiteral(ast.value);
+    }
+    return t.EmptyStatement();
   }
   if (bt.isAssignmentExpression(ast)) {
     if (bt.isMemberExpression(ast.left)) {
