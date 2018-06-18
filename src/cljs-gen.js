@@ -48,6 +48,9 @@ function generate(node) {
   if (node.type === "EmptyStatement") {
     return undefined;
   }
+  if (node.type === "BreakStatement") {
+    return undefined;
+  }
 
   console.log(node);
 }

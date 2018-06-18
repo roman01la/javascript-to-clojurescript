@@ -73,6 +73,10 @@ const EmptyStatement = () => ({
   type: "EmptyStatement"
 });
 
+const BreakStatement = () => ({
+  type: "BreakStatement"
+});
+
 const DEF = "def";
 const DEFN = "defn";
 const FN = "fn";
@@ -80,6 +84,7 @@ const LET = "let";
 const IF = "if";
 const WHEN = "when";
 const COND = "cond";
+const CASE = "case";
 const NIL = "nil";
 
 module.exports = {
@@ -92,6 +97,7 @@ module.exports = {
   ObjectExpression,
   ObjectProperty,
   EmptyStatement,
+  BreakStatement,
   list,
   vector,
   tagged,
@@ -105,5 +111,6 @@ module.exports = {
   IF,
   WHEN,
   COND,
+  CASE,
   NIL
 };

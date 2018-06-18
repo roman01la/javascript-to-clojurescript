@@ -1,6 +1,9 @@
 const bt = require("babel-types");
 const t = require("./cljs-types");
 
+const flatMap = (fn, coll) =>
+  coll.map(fn).reduce((ret, e) => ret.concat(e), []);
+
 function isNestedThisExpression(node) {
   if (bt.isThisExpression(node.object)) {
     return node;
@@ -326,12 +329,10 @@ const transformRec = (ast, opts = {}) => {
         n => bt.isVariableDeclaration(n),
         ast.body
       );
-      const entries = decls
-        .map(d => {
-          const { id, init } = d.declarations[0];
-          return [transformRec(id), transformRec(init)];
-        })
-        .reduce((ret, e) => ret.concat(e), []);
+      const entries = flatMap(d => {
+        const { id, init } = d.declarations[0];
+        return [transformRec(id), transformRec(init)];
+      }, decls);
       return t.list([
         t.symbol(t.LET),
         t.vector(entries),
@@ -383,6 +384,43 @@ const transformRec = (ast, opts = {}) => {
       retWhen.children.push(retConseq);
     }
     return retWhen;
+  }
+  if (bt.isSwitchStatement(ast)) {
+    const { discriminant, cases } = ast;
+
+    return t.list([
+      t.symbol(t.CASE),
+      transformRec(discriminant),
+      ...flatMap(transformRec, cases)
+    ]);
+  }
+  if (bt.isSwitchCase(ast)) {
+    const { test, consequent } = ast;
+
+    const csqf = consequent.filter(n => !bt.isBreakStatement(n));
+    const csq = csqf.map(transformRec);
+
+    if (bt.isVariableDeclaration(consequent[0])) {
+      const [decls, rest] = takeWhile(n => bt.isVariableDeclaration(n), csqf);
+      const entries = flatMap(d => {
+        const { id, init } = d.declarations[0];
+        return [transformRec(id), transformRec(init)];
+      }, decls);
+
+      return [
+        transformRec(test),
+        t.list([t.symbol(t.LET), t.vector(entries), ...rest.map(transformRec)])
+      ];
+    }
+
+    if (test === null) {
+      return csq;
+    }
+
+    if (csq.length > 1) {
+      return [transformRec(test), t.list([t.symbol("do"), ...csq])];
+    }
+    return [transformRec(test), ...csq];
   }
 
   console.log(ast);
