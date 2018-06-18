@@ -42,6 +42,13 @@ function getCondEntries(node, ret = []) {
   ]);
 }
 
+function getDotProps(node, ret = []) {
+  if (bt.isMemberExpression(node.object)) {
+    return getDotProps(node.object, [node.property, ...ret]);
+  }
+  return [node.object, node.property, ...ret];
+}
+
 // ==================
 
 const transformRec = (ast, opts = {}) => {
@@ -148,9 +155,8 @@ const transformRec = (ast, opts = {}) => {
       if (callee.object.name && window.hasOwnProperty(callee.object.name)) {
         const fn = t.symbol(`js/${callee.object.name}`);
         return t.list([
-          t.symbol("."),
+          t.symbol(`.${callee.property.name}`),
           fn,
-          transformRec(callee.property),
           ...ast.arguments.map(transformRec)
         ]);
       } else {
@@ -182,57 +188,51 @@ const transformRec = (ast, opts = {}) => {
           t.symbol("this"),
           t.list([t.symbol("."), t.symbol("this"), transformRec(property)])
         ]);
-      } else {
-        if (ast.computed) {
-          if (opts.isCallExpression) {
-            return t.list([
-              t.list([
-                t.symbol("aget"),
-                transformRec(object),
-                transformRec(property)
-              ])
-            ]);
-          } else {
-            return t.list([
+      } else if (ast.computed) {
+        if (opts.isCallExpression) {
+          return t.list([
+            t.list([
               t.symbol("aget"),
               transformRec(object),
               transformRec(property)
-            ]);
-          }
-        } else {
-          return t.list([
-            t.symbol("."),
-            transformRec(object),
-            transformRec(property)
+            ])
           ]);
-        }
-      }
-    } else {
-      if (bt.isThisExpression(object)) {
-        return t.list([
-          t.symbol("this-as"),
-          t.symbol("this"),
-          t.list([
-            t.symbol("."),
-            t.symbol("this"),
-            transformRec(property, { isGetter: true })
-          ])
-        ]);
-      } else {
-        if (ast.computed) {
+        } else {
           return t.list([
             t.symbol("aget"),
             transformRec(object),
             transformRec(property)
           ]);
-        } else {
-          return t.list([
-            t.symbol("."),
-            transformRec(object),
-            transformRec(property, { isGetter: true })
-          ]);
         }
+      } else {
+        return t.list([t.symbol(`.${property.name}`), transformRec(object)]);
       }
+    } else if (bt.isThisExpression(object)) {
+      return t.list([
+        t.symbol("this-as"),
+        t.symbol("this"),
+        t.list([
+          t.symbol("."),
+          t.symbol("this"),
+          transformRec(property, { isGetter: true })
+        ])
+      ]);
+    } else if (ast.computed) {
+      return t.list([
+        t.symbol("aget"),
+        transformRec(object),
+        transformRec(property)
+      ]);
+    } else {
+      const [target, ...props] = getDotProps(ast);
+      if (props.length === 1) {
+        return t.list([t.symbol(`.-${props[0].name}`), transformRec(target)]);
+      }
+      return t.list([
+        t.symbol(".."),
+        transformRec(target),
+        ...props.map(n => transformRec(n, { isGetter: true }))
+      ]);
     }
   }
   if (bt.isObjectExpression(ast)) {
