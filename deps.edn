@@ -1,0 +1,2 @@
+{:deps {org.clojure/clojurescript {:mvn/version "1.10.312"}}
+ :paths ["cljs-src"]}

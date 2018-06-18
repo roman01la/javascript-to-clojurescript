@@ -1,0 +1,106 @@
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  font: normal 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+#root .col {
+  max-width: 50%;
+}
+
+.row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid #e2e2e2;
+  position: relative;
+}
+.react-root {
+  border-top: 0.5px solid #e2e2e2;
+  position: relative;
+}
+
+.col > div {
+  flex: 1;
+  max-height: 100%;
+}
+
+.CodeMirror {
+  height: 100%;
+}
+
+.popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 6;
+}
+
+.popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  width: 460px;
+  background: #fff;
+  z-index: 6;
+  border-radius: 5px;
+  box-shadow: 0 4px 64px rgba(0, 0, 0, 0.2);
+  padding: 32px;
+}
+
+.popup h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: normal;
+}
+.label {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 9px;
+  z-index: 5;
+  color: #a3a3a3;
+  text-transform: uppercase;
+  font-weight: 500;
+  background: #fff;
+  padding: 2px 4px;
+}
+
+a {
+  color: #3163ff;
+}
+
+.app-header {
+  width: 100vw;
+  padding: 8px 16px;
+  background: #40a9c2;
+  color: #fff;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .row {
+    flex-direction: column;
+  }
+  #root .col {
+    max-width: 100%;
+  }
+}

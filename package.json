@@ -1,0 +1,16 @@
+{
+  "name": "js2cljs",
+  "license": "MIT",
+  "dependencies": {
+    "babel-types": "^6.26.0",
+    "babylon": "^6.18.0",
+    "webpack": "^4.12.0",
+    "webpack-cli": "^3.0.8",
+    "zprint-clj": "^0.2.0"
+  },
+  "scripts": {
+    "dev": "webpack --mode=development --watch",
+    "prod": "webpack --mode=production",
+    "cljs": "clojure -m cljs.main -O simple -o public/compiler.js -c j2c.core -v"
+  }
+}
