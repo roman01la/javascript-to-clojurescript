@@ -180,11 +180,13 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isCallExpression(ast)) {
     const { callee } = ast;
 
-    const chain = maybeThreadMemberSyntax(ast).filter(r => r.length !== 0);
+    const memberChain = maybeThreadMemberSyntax(ast).filter(
+      r => r.length !== 0
+    );
 
-    if (chain.length > 2) {
+    if (memberChain.length > 2) {
       let fn;
-      const [id, args, ...entries] = chain;
+      const [id, args, ...entries] = memberChain;
       if (window.hasOwnProperty(id.name)) {
         fn = t.symbol(`js/${id.name}`);
       } else {
