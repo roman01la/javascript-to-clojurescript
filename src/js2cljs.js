@@ -516,6 +516,15 @@ const transformRec = (ast, opts = {}) => {
       t.list([imported, t.list([t.symbol("js/require"), transformRec(source)])])
     ]);
   }
+  if (bt.isConditionalExpression(ast)) {
+    const { test, consequent, alternate } = ast;
+    return t.list([
+      t.symbol(t.IF),
+      transformRec(test),
+      transformRec(consequent),
+      transformRec(alternate)
+    ]);
+  }
 
   console.info(ast);
   throw new Error(`${ast.type} is not implemented`);
