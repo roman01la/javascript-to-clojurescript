@@ -12,7 +12,14 @@
 <body>
 
   <header class="app-header">
-    JavaScript to ClojureScript translator
+    <span>JavaScript to ClojureScript translator</span>
+    <div class="selector">
+      <span>Examples:</span>
+      <select name="" id="demos">
+        <option value="basic">Basic</option>
+        <option value="react">React</option>
+      </select>
+    </div>
   </header>
 
   <div id="root" class="col">
@@ -50,16 +57,21 @@
     <h1>JavaScript to ClojureScript translator</h1>
     <div>
       <p>This tool tries to translate as much JavaScript code into ClojureScript as it can. Keep in mind that it might fail
-        due to substantial differences between languages.</p>
+        or the result will be non-idiomatic Clojure code due to substantial differences between languages.</p>
       <p>
-        <small>e.g. Clojure explicitly distincts global and local vars, but JavaScript does not.</small>
+        <small>e.g. Clojure explicitly distincts global and local vars, but JavaScript does not</small>
         <small>
           <pre>(def x 1) ;; global
 (let [x 2] ;; local
   (/ x 2))</pre>
         </small>
-        <small>Because of this all vars declarations are translated into
-          <strong>globals</strong>.
+      </p>
+      <p>
+        <small>Clojure's data structures are immutable by defalt</small>
+        <small>
+          <pre>(let [x {}]
+  [(assoc x :y 1) x])
+  ;; [{:y 1} {}]</pre>
         </small>
       </p>
       <p>Use for educational purpose.</p>
