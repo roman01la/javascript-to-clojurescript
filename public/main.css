@@ -94,6 +94,12 @@ a {
   background: #40a9c2;
   color: #fff;
   font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.selector {
+  margin: 0 0 0 32px;
 }
 
 @media (max-width: 760px) {

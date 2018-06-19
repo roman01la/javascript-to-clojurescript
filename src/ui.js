@@ -17,9 +17,20 @@ if (popup.clientWidth >= document.body.clientWidth) {
   popup.style.width = `${document.body.clientWidth - 96}px`;
 }
 
+function router(routes) {
+  const handle = v => {
+    const r = v.replace("#", "");
+    if (routes.hasOwnProperty(r)) {
+      return routes[r]();
+    }
+  };
+  window.addEventListener("hashchange", e => handle(window.location.hash));
+  return handle;
+}
+
 // =================
 
-let exampleCode = `function dist(p1, p2) {
+const basicExampleCode = `function dist(p1, p2) {
   const a = p1.x - p2.x;
   const b = p1.y - p2.y;
 
@@ -62,61 +73,58 @@ switch (1) {
     console.log("default case");
 }`;
 
-if (location.hash === "#react") {
-  exampleCode = `function State(initial) {
-  	const ctx = { st: initial, listeners: [] };
-    return {
-        update: (next) => {
-            ctx.st = Object.assign(ctx.st, next);
-            ctx.listeners.forEach(fn => fn(ctx.st));
-        },
-        deref: () => ctx.st,
-        listen: (f) => ctx.listeners.push(f)
-      };
-  };
-  
-  const state = new State({ value: "", repos: [] });
-  
-  function handleSubmit(e, uname) {
-      console.log(uname);
-    e.preventDefault();
-    fetch("https://api.github.com/users/" + uname + "/repos")
-        .then(res => res.json())
-        .then(json => {
-            console.log(JSON.stringify(json[0]));
-          state.update({repos:json});
-        })
-        .catch(err => console.log(err));
-  }
-  
-  const App = (st) => html(
-    <div>
-      <form onSubmit={e => handleSubmit(e, st.value)}>
-          <input placeholder="GitHub user name"
-             value={st.value}
-             onChange={e => {
-                               state.update({value: e.target.value})
-                              }} />
-          <button>Fetch</button>
-        </form>
-        {"repos fetched: " + st.repos.length}
-      </div>
-  );
-  
-  const render = (st) => ReactDOM.render(App(st), document.getElementById("react-root"));
-  
-  render(state.deref());
-  
-  state.listen(render);
-  
-  `;
+const reactExampleCode = `function State(initial) {
+  const ctx = { st: initial, listeners: [] };
+  return {
+      update: (next) => {
+          ctx.st = Object.assign(ctx.st, next);
+          ctx.listeners.forEach(fn => fn(ctx.st));
+      },
+      deref: () => ctx.st,
+      listen: (f) => ctx.listeners.push(f)
+    };
+};
+
+const state = new State({ value: "", repos: [] });
+
+function handleSubmit(e, uname) {
+    console.log(uname);
+  e.preventDefault();
+  fetch("https://api.github.com/users/" + uname + "/repos")
+      .then(res => res.json())
+      .then(json => {
+          console.log(JSON.stringify(json[0]));
+        state.update({repos:json});
+      })
+      .catch(err => console.log(err));
 }
+
+const App = (st) => html(
+  <div>
+    <form onSubmit={e => handleSubmit(e, st.value)}>
+        <input placeholder="GitHub user name"
+            value={st.value}
+            onChange={e => {
+                              state.update({value: e.target.value})
+                            }} />
+        <button>Fetch</button>
+      </form>
+      {"repos fetched: " + st.repos.length}
+    </div>
+);
+
+const render = (st) => ReactDOM.render(App(st), document.getElementById("react-root"));
+
+render(state.deref());
+
+state.listen(render);
+
+`;
 
 const jsEditor = new CodeMirror(window.jsCode, {
   lineNumbers: true,
   mode: "javascript"
 });
-jsEditor.setValue(exampleCode);
 
 const cljsEditor = new CodeMirror(window.cljsCode, {
   lineNumbers: true,
@@ -179,4 +187,22 @@ const handleJSChangeD = debounce(1000, handleJSChange);
 
 jsEditor.on("change", handleJSChangeD);
 
-handleJSChange();
+const routes = {
+  "": () => {
+    jsEditor.setValue(basicExampleCode);
+  },
+  basic: () => {
+    jsEditor.setValue(basicExampleCode);
+  },
+  react: () => {
+    jsEditor.setValue(reactExampleCode);
+  }
+};
+
+const r = router(routes);
+
+r(window.location.hash);
+
+document.getElementById("demos").addEventListener("change", e => {
+  window.location.hash = e.target.value;
+});
