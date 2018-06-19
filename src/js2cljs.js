@@ -517,7 +517,8 @@ const transformRec = (ast, opts = {}) => {
       }
     });
 
-    const [[imported, local]] = sxs;
+    const imported = sxs[0][0];
+    const local = sxs[0][1];
 
     if (imported === "*") {
       return t.list([
