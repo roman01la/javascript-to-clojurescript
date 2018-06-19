@@ -92,6 +92,23 @@ function normalizeOperator(op) {
   return op;
 }
 
+function makeDEFN(id, params, body) {
+  const bodies = transformRec(body, { isImplicitDo: true });
+
+  const l = t.list([
+    t.symbol(t.DEFN),
+    transformRec(id),
+    t.vector(params.map(transformRec))
+  ]);
+
+  if (Array.isArray(bodies)) {
+    l.children.push(...bodies);
+  } else {
+    l.children.push(bodies);
+  }
+  return l;
+}
+
 // ==================
 
 const transformRec = (ast, opts = {}) => {
@@ -151,25 +168,16 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isVariableDeclarator(ast)) {
     const { id, init } = ast;
 
+    if (bt.isArrowFunctionExpression(init)) {
+      const { body, params } = init;
+      return makeDEFN(id, params, body);
+    }
+
     return t.list([t.symbol(t.DEF), transformRec(id), transformRec(init)]);
   }
   if (bt.isFunctionDeclaration(ast)) {
     const { id, params, body } = ast;
-
-    const bodies = transformRec(body, { isImplicitDo: true });
-
-    const l = t.list([
-      t.symbol(t.DEFN),
-      transformRec(id),
-      t.vector(params.map(transformRec))
-    ]);
-
-    if (Array.isArray(bodies)) {
-      l.children.push(...bodies);
-    } else {
-      l.children.push(bodies);
-    }
-    return l;
+    return makeDEFN(id, params, body);
   }
   if (bt.isFunctionExpression(ast)) {
     const { id, params, body } = ast;
