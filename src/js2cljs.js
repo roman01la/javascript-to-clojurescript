@@ -49,17 +49,31 @@ function getDotProps(node, ret = []) {
   return [node.object, node.property, ...ret];
 }
 
-function maybeThreadMemberSyntax(node, ret = []) {
+function maybeThreadMemberSyntax(node) {
   if (bt.isCallExpression(node)) {
-    return [
-      ...maybeThreadMemberSyntax(node.callee.object, [
-        node.callee.property || node.callee,
-        node.arguments
-      ]),
-      ret
-    ];
+    if (bt.isCallExpression(node.callee.object)) {
+      return [
+        t.list([
+          transformRec(node.callee.property, { isCall: true }),
+          ...node.arguments.map(transformRec)
+        ]),
+        ...maybeThreadMemberSyntax(node.callee.object)
+      ];
+    }
+
+    let f;
+
+    if (
+      bt.isIdentifier(node.callee) &&
+      window.hasOwnProperty(node.callee.name)
+    ) {
+      f = t.symbol(`js/${node.callee.name}`);
+    } else {
+      f = transformRec(node.callee);
+    }
+
+    return [t.list([f, ...node.arguments.map(transformRec)])];
   }
-  return ret;
 }
 
 function normlizeOperator(op) {
@@ -122,6 +136,9 @@ const transformRec = (ast, opts = {}) => {
     }
     if (opts.isCall) {
       return t.symbol(`.${ast.name}`);
+    }
+    if (opts.checkGlobal && window.hasOwnProperty(ast.name)) {
+      return t.symbol(`js/${ast.name}`);
     }
     return t.symbol(ast.name);
   }
@@ -199,28 +216,10 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isCallExpression(ast)) {
     const { callee } = ast;
 
-    const memberChain = maybeThreadMemberSyntax(ast).filter(
-      r => r.length !== 0
-    );
+    const memberChain = maybeThreadMemberSyntax(ast).reverse();
 
     if (memberChain.length > 2) {
-      let fn;
-      const [id, args, ...entries] = memberChain;
-      if (window.hasOwnProperty(id.name)) {
-        fn = t.symbol(`js/${id.name}`);
-      } else {
-        fn = transformRec(id);
-      }
-      return t.list([
-        t.symbol("->"),
-        t.list([fn, ...args.map(transformRec)]),
-        ...entries.map(([id, args]) =>
-          t.list([
-            transformRec(id, { isCall: true }),
-            ...args.map(transformRec)
-          ])
-        )
-      ]);
+      return t.list([t.symbol("->"), ...memberChain]);
     }
 
     if (bt.isMemberExpression(callee)) {
@@ -298,11 +297,14 @@ const transformRec = (ast, opts = {}) => {
     } else {
       const [target, ...props] = getDotProps(ast);
       if (props.length === 1) {
-        return t.list([t.symbol(`.-${props[0].name}`), transformRec(target)]);
+        return t.list([
+          t.symbol(`.-${props[0].name}`),
+          transformRec(target, { checkGlobal: true })
+        ]);
       }
       return t.list([
         t.symbol(".."),
-        transformRec(target),
+        transformRec(target, { checkGlobal: true }),
         ...props.map(n => transformRec(n, { isGetter: true }))
       ]);
     }

@@ -1,4 +1,5 @@
 const js2cljs = require("./index");
+window.Immutable = require("immutable");
 
 window.html = j2c.core.compileHiccup;
 
@@ -121,6 +122,10 @@ state.listen(render);
 
 `;
 
+const immutableExampleCode = `Immutable.List([1, 2, 3])
+  .push(4)
+  .pop();`;
+
 const jsEditor = new CodeMirror(window.jsCode, {
   lineNumbers: true,
   mode: "javascript"
@@ -196,12 +201,16 @@ const routes = {
   },
   react: () => {
     jsEditor.setValue(reactExampleCode);
+  },
+  immutable: () => {
+    jsEditor.setValue(immutableExampleCode);
   }
 };
 
 const r = router(routes);
 
 r(window.location.hash);
+document.getElementById("demos").value = window.location.hash.replace("#", "");
 
 document.getElementById("demos").addEventListener("change", e => {
   window.location.hash = e.target.value;
