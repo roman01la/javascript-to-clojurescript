@@ -101,6 +101,9 @@ const transformRec = (ast, opts = {}) => {
     if (opts.isGetter) {
       return t.symbol(`-${ast.name}`);
     }
+    if (opts.isDotGetter) {
+      return t.symbol(`.-${ast.name}`);
+    }
     if (opts.isCall) {
       return t.symbol(`.${ast.name}`);
     }
@@ -479,6 +482,39 @@ const transformRec = (ast, opts = {}) => {
       return [transformRec(test), t.list([t.symbol("do"), ...csq])];
     }
     return [transformRec(test), ...csq];
+  }
+  if (bt.isImportDeclaration(ast)) {
+    const { source, specifiers } = ast;
+
+    const sxs = specifiers.map(s => {
+      if (bt.isImportSpecifier(s)) {
+        return [
+          transformRec(s.imported, { isDotGetter: true }),
+          transformRec(s.local)
+        ];
+      }
+      if (bt.isImportDefaultSpecifier(s)) {
+        return [t.symbol(".-default"), transformRec(s.local)];
+      }
+      if (bt.isImportNamespaceSpecifier(s)) {
+        return ["*", transformRec(s.local)];
+      }
+    });
+
+    const [[imported, local]] = sxs;
+
+    if (imported === "*") {
+      return t.list([
+        t.symbol(t.DEF),
+        local,
+        t.list([t.symbol("js/require"), transformRec(source)])
+      ]);
+    }
+    return t.list([
+      t.symbol(t.DEF),
+      local,
+      t.list([imported, t.list([t.symbol("js/require"), transformRec(source)])])
+    ]);
   }
 
   console.info(ast);
