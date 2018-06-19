@@ -17,6 +17,12 @@ const transformRec = require("./js2cljs");
 // console.log(code);
 
 module.exports = code =>
-  zprint(generate(transformRec(parse(code, { plugins: ["jsx"] }))), "sample", {
-    isHangEnabled: false
-  });
+  zprint(
+    generate(
+      transformRec(parse(code, { sourceType: "module", plugins: ["jsx"] }))
+    ),
+    "sample",
+    {
+      isHangEnabled: false
+    }
+  );
