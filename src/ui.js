@@ -112,10 +112,6 @@ if (location.hash === "#react") {
   `;
 }
 
-exampleCode = `import AutosizeInput from 'react-input-autosize';
-import { findDOMNode } from 'react-dom';
-import * as f from 'react-dom';`;
-
 const jsEditor = new CodeMirror(window.jsCode, {
   lineNumbers: true,
   mode: "javascript"
