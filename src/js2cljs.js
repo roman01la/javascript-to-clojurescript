@@ -89,6 +89,12 @@ function normalizeOperator(op) {
   if (op === "!==") {
     return "not=";
   }
+  if (op === "||") {
+    return "or";
+  }
+  if (op === "&&") {
+    return "and";
+  }
   return op;
 }
 
@@ -509,6 +515,9 @@ const transformRec = (ast, opts = {}) => {
     }
     return [transformRec(test), ...csq];
   }
+  if (bt.BreakStatement(ast)) {
+    return t.BreakStatement();
+  }
   if (bt.isImportDeclaration(ast)) {
     const { source, specifiers } = ast;
 
@@ -551,6 +560,17 @@ const transformRec = (ast, opts = {}) => {
       transformRec(consequent),
       transformRec(alternate)
     ]);
+  }
+  if (bt.isLogicalExpression(ast)) {
+    const { operator, left, right } = ast;
+    return t.list([
+      t.symbol(normalizeOperator(operator)),
+      transformRec(left),
+      transformRec(right)
+    ]);
+  }
+  if (bt.isNullLiteral(ast)) {
+    return t.symbol(t.NIL);
   }
 
   console.info(ast);
