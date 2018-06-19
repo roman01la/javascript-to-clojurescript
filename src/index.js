@@ -16,13 +16,15 @@ const transformRec = require("./js2cljs");
 
 // console.log(code);
 
-module.exports = code =>
-  zprint(
-    generate(
-      transformRec(parse(code, { sourceType: "module", plugins: ["jsx"] }))
-    ),
-    "sample",
-    {
-      isHangEnabled: false
-    }
-  );
+const toLispAST = code =>
+  transformRec(parse(code, { sourceType: "module", plugins: ["jsx"] }));
+
+const transform = code =>
+  zprint(generate(toLispAST(code)), "sample", {
+    isHangEnabled: false
+  });
+
+module.exports = {
+  toLispAST,
+  transform
+};

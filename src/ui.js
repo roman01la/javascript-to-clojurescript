@@ -1,5 +1,5 @@
 const js2cljs = require("./index");
-window.Immutable = require("immutable");
+const generate = require("./cljs-gen");
 
 window.html = j2c.core.compileHiccup;
 
@@ -122,10 +122,6 @@ state.listen(render);
 
 `;
 
-const immutableExampleCode = `Immutable.List([1, 2, 3])
-  .push(4)
-  .pop();`;
-
 const jsEditor = new CodeMirror(window.jsCode, {
   lineNumbers: true,
   mode: "javascript"
@@ -167,7 +163,7 @@ const handleJSChange = () => {
   stdoutEditor.setValue("");
 
   try {
-    const code = js2cljs(jsEditor.getValue());
+    const code = js2cljs.transform(jsEditor.getValue());
     cljsEditor.setValue(code);
     j2c.core.evalExpr(code, (err, code) => {
       if (err) {
@@ -201,16 +197,14 @@ const routes = {
   },
   react: () => {
     jsEditor.setValue(reactExampleCode);
-  },
-  immutable: () => {
-    jsEditor.setValue(immutableExampleCode);
   }
 };
 
 const r = router(routes);
 
-r(window.location.hash);
-document.getElementById("demos").value = window.location.hash.replace("#", "");
+r(window.location.hash || "basic");
+document.getElementById("demos").value =
+  window.location.hash.replace("#", "") || "basic";
 
 document.getElementById("demos").addEventListener("change", e => {
   window.location.hash = e.target.value;
