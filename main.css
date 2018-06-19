@@ -1,5 +1,13 @@
+html {
+  box-sizing: border-box;
+}
+
+html * {
+  box-sizing: inherit;
+}
+
 body {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   overflow: hidden;
   margin: 0;
@@ -8,7 +16,7 @@ body {
 }
 
 #root {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
 }
 
@@ -88,18 +96,23 @@ a {
   color: #3163ff;
 }
 
+.app-header a {
+  color: #fff;
+}
+
 .app-header {
-  width: 100vw;
+  width: 100%;
   padding: 8px 16px;
   background: #40a9c2;
   color: #fff;
-  font-size: 12px;
+  font-size: 11px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .selector {
-  margin: 0 0 0 32px;
+  margin: 0 0 0 16px;
 }
 
 @media (max-width: 760px) {
