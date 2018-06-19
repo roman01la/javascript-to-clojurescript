@@ -69,6 +69,12 @@ function normlizeOperator(op) {
   if (op === "===") {
     return "=";
   }
+  if (op === "!=") {
+    return "not=";
+  }
+  if (op === "!==") {
+    return "not=";
+  }
   return op;
 }
 
