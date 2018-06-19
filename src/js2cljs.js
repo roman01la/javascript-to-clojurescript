@@ -62,6 +62,16 @@ function maybeThreadMemberSyntax(node, ret = []) {
   return ret;
 }
 
+function normlizeOperator(op) {
+  if (op === "==") {
+    return "=";
+  }
+  if (op === "===") {
+    return "=";
+  }
+  return op;
+}
+
 // ==================
 
 const transformRec = (ast, opts = {}) => {
@@ -85,7 +95,7 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isBinaryExpression(ast)) {
     const { operator, left, right } = ast;
 
-    const expr = t.list([t.symbol(operator)]);
+    const expr = t.list([t.symbol(normlizeOperator(operator))]);
     const l = transformRec(left);
     const r = transformRec(right);
 
