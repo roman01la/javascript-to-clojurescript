@@ -5,6 +5,7 @@ const zprint = require("zprint-clj");
 
 const generate = require("./cljs-gen");
 const transformAST = require("./js2cljs");
+const addSyntaxSugar = require("./syntax-builder");
 
 // const jscode = fs.readFileSync(path.join(__dirname, "test.js"), "utf8");
 
@@ -26,5 +27,6 @@ const transform = code =>
 
 module.exports = {
   toLispAST,
-  transform
+  transform,
+  addSyntaxSugar
 };

@@ -1,0 +1,13 @@
+true;
+false;
+null;
+undefined;
+1;
+1.34;
+1e8;
+Infinity;
+NaN;
+("hello");
+`multi
+  line`;
+/^[a-z]/iu;

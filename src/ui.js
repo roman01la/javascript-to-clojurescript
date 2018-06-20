@@ -17,11 +17,11 @@ if (popup.clientWidth >= document.body.clientWidth) {
   popup.style.width = `${document.body.clientWidth - 96}px`;
 }
 
-function router(routes) {
+function router({ urls, fn }) {
   const handle = v => {
     const r = v.replace("#", "");
-    if (routes.hasOwnProperty(r)) {
-      return routes[r]();
+    if (urls.includes(r)) {
+      return fn(r);
     }
   };
   window.addEventListener("hashchange", e => handle(window.location.hash));
@@ -30,96 +30,21 @@ function router(routes) {
 
 // =================
 
-const basicExampleCode = `function dist(p1, p2) {
-  const a = p1.x - p2.x;
-  const b = p1.y - p2.y;
-
-  return Math.sqrt( a*a + b*b );
-}
-
-{ // explicit block scope
-  const p1 = { x: 1, y: -9 };
-  const p2 = { x: -4, y: 13 };
-  
-  const d = dist(p1, p2);
-
-  console.log("Distance: " + d);
-  
-  if (d > 0) {
-      const apxd = Math.round(d);
-      console.log("Distance is positive!", "≈" + apxd);
-  }
-}
-
-// cond
-if (0 > 1) {
-	console.log("0 > 1");
-} else if (1 < 0) {
-	console.log("0 > 1");
-} else if (9 < -9) {
-	console.log("9 < -9");
-}
-
-// case
-switch (1) {
-  case 4:
-    const h = 1;
-    console.log(h);
-    break;
-  case 3:
-    console.log(3);
-    break;
-  default:
-    console.log("default case");
-}`;
-
-const reactExampleCode = `function State(initial) {
-  const ctx = { st: initial, listeners: [] };
-  return {
-      update: (next) => {
-          ctx.st = Object.assign(ctx.st, next);
-          ctx.listeners.forEach(fn => fn(ctx.st));
-      },
-      deref: () => ctx.st,
-      listen: (f) => ctx.listeners.push(f)
-    };
+const examples = {
+  primitives: "01.primitives.js",
+  variables: "02.variables.js",
+  functions: "03.functions.js",
+  conditionals: "04.conditionals.js",
+  operators: "05.operators.js",
+  array: "06.array.js",
+  object: "07.object.js",
+  "try..catch": "08.try-catch.js",
+  threading: "09.threading.js",
+  basic: "basic.js",
+  react: "react.js"
 };
 
-const state = new State({ value: "", repos: [] });
-
-function handleSubmit(e, uname) {
-    console.log(uname);
-  e.preventDefault();
-  fetch("https://api.github.com/users/" + uname + "/repos")
-      .then(res => res.json())
-      .then(json => {
-          console.log(JSON.stringify(json[0]));
-        state.update({repos:json});
-      })
-      .catch(err => console.log(err));
-}
-
-const App = (st) => html(
-  <div>
-    <form onSubmit={e => handleSubmit(e, st.value)}>
-        <input placeholder="GitHub user name"
-            value={st.value}
-            onChange={e => {
-                              state.update({value: e.target.value})
-                            }} />
-        <button>Fetch</button>
-      </form>
-      {"repos fetched: " + st.repos.length}
-    </div>
-);
-
-const render = (st) => ReactDOM.render(App(st), document.getElementById("react-root"));
-
-render(state.deref());
-
-state.listen(render);
-
-`;
+const loadExample = id => fetch(`examples/${examples[id]}`).then(r => r.text());
 
 const jsEditor = new CodeMirror(window.jsCode, {
   lineNumbers: true,
@@ -187,24 +112,37 @@ const handleJSChangeD = debounce(1000, handleJSChange);
 
 jsEditor.on("change", handleJSChangeD);
 
-const routes = {
-  "": () => {
-    jsEditor.setValue(basicExampleCode);
-  },
-  basic: () => {
-    jsEditor.setValue(basicExampleCode);
-  },
-  react: () => {
-    jsEditor.setValue(reactExampleCode);
-  }
+const loadExampleAndDisplay = id =>
+  loadExample(id)
+    .then(code => {
+      jsEditor.setValue(code);
+    })
+    .catch(() => {
+      alert(`Couldn't load example "${val}"`);
+    });
+
+const r = router({
+  urls: Object.keys(examples).concat([""]),
+  fn: loadExampleAndDisplay
+});
+
+const h = (tag, attrs, ...children) => {
+  const el = document.createElement(tag);
+  Object.assign(el, attrs);
+  el.append(...children);
+  return el;
 };
 
-const r = router(routes);
+const options = Object.keys(examples).map(id => h("option", { value: id }, id));
+const select = h("select", {}, ...options);
+
+document.querySelector(".selector").append(select);
 
 r(window.location.hash || "basic");
-document.getElementById("demos").value =
-  window.location.hash.replace("#", "") || "basic";
 
-document.getElementById("demos").addEventListener("change", e => {
-  window.location.hash = e.target.value;
+select.value = window.location.hash.replace("#", "") || "basic";
+
+select.addEventListener("change", e => {
+  const val = e.target.value;
+  window.location.hash = val;
 });
