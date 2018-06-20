@@ -5,85 +5,26 @@ const utils = require("./utils");
 const jsTypes = require("./ast-types/javascript");
 const jsxTypes = require("./ast-types/jsx");
 
-function makeDEFN(next, id, params, body) {
-  const bodies = next(body, { isImplicitDo: true });
-
-  const l = t.list([t.symbol(t.DEFN), next(id), t.vector(params.map(next))]);
-
-  if (Array.isArray(bodies)) {
-    l.children.push(...bodies);
-  } else {
-    l.children.push(bodies);
-  }
-  return l;
-}
-
-function getDotProps(node, ret = []) {
-  if (bt.isMemberExpression(node.object)) {
-    return getDotProps(node.object, [node.property, ...ret]);
-  }
-  return [node.object, node.property, ...ret];
-}
-
-function maybeThreadMemberSyntax(next, node) {
-  if (bt.isCallExpression(node)) {
-    if (bt.isCallExpression(node.callee.object)) {
-      return [
-        t.list([
-          next(node.callee.property, { isCall: true }),
-          ...node.arguments.map(next)
-        ]),
-        ...maybeThreadMemberSyntax(next, node.callee.object)
-      ];
-    }
-
-    let f;
-
-    if (
-      bt.isIdentifier(node.callee) &&
-      window.hasOwnProperty(node.callee.name)
-    ) {
-      f = t.symbol(`js/${node.callee.name}`);
-    } else {
-      f = next(node.callee);
-    }
-
-    return [t.list([f, ...node.arguments.map(next)])];
-  }
-}
-
-function isNestedThisExpression(node) {
-  if (bt.isThisExpression(node.object)) {
-    return node;
-  }
-  if (node.object.hasOwnProperty("object")) {
-    return isNestedThisExpression(node.object);
-  }
-  return false;
-}
-
-function alterNestedThisExpression(name, node) {
-  const thisNode = isNestedThisExpression(node);
-  if (thisNode) {
-    thisNode.object = bt.identifier(name);
-  }
-}
-
-// =============
+const {
+  DEF,
+  FN,
+  DEFN,
+  FN_CALL,
+  METHOD_CALL,
+  THIS_AS,
+  PROP_GET,
+  NESTED_PROPS_GET,
+  DO,
+  IF,
+  WHEN,
+  COND,
+  CASE,
+  HICCUP_ELEMENT
+} = require("./ast-builders");
 
 const File = (next, ast, opts) => next(ast.program);
 const Program = (next, ast, opts) => t.program(ast.body.map(next));
-const ExpressionStatement = (next, ast, opts) => {
-  let comments;
-  if (Array.isArray(ast.leadingComments)) {
-    comments = ast.leadingComments.map(n => t.comment(n.value));
-  }
-  const ret = next(ast.expression);
-  if (comments) {
-    ret.comments = comments;
-  }
-  return ret;
-};
+const ExpressionStatement = (next, ast, opts) => next(ast.expression);
 
 const BinaryExpression = (next, ast, opts) => {
   const { operator, left, right } = ast;
@@ -121,50 +62,36 @@ const VariableDeclaration = (next, ast, opts) => next(ast.declarations[0]);
 const VariableDeclarator = (next, ast, opts) => {
   const { id, init } = ast;
 
-  if (bt.isArrowFunctionExpression(init)) {
-    const { body, params } = init;
-    return makeDEFN(next, id, params, body);
+  if (init === null) {
+    return DEF(next(id), t.symbol(t.NIL));
   }
 
-  return t.list([t.symbol(t.DEF), next(id), next(init)]);
+  if (bt.isArrowFunctionExpression(init)) {
+    const { body, params } = init;
+    return DEFN(next, id, params, body);
+  }
+
+  return DEF(next(id), next(init));
 };
 
 const FunctionDeclaration = (next, ast, opts) => {
   const { id, params, body } = ast;
-  return makeDEFN(next, id, params, body);
+  return DEFN(next, id, params, body);
 };
 
 const FunctionExpression = (next, ast, opts) => {
   const { id, params, body } = ast;
 
-  let node;
-  const bodies = body.body && body.body.map(next);
-
   if (id === null) {
-    node = t.list([t.symbol(t.FN), t.vector(params.map(next))]);
+    return FN(next, params, body);
   } else {
-    node = t.list([t.symbol(t.DEFN), next(id), t.vector(params.map(next))]);
+    return DEFN(next, id, params, body);
   }
-
-  if (bodies) {
-    node.children.push(...bodies);
-  }
-  return node;
 };
 
 const ArrowFunctionExpression = (next, ast, opts) => {
   const { params, body } = ast;
-
-  const node = t.list([t.symbol(t.FN), t.vector(params.map(next))]);
-
-  const bodies = ast.expression
-    ? [next(body)]
-    : next(body, { isImplicitDo: true });
-
-  if (bodies) {
-    node.children.push(...bodies);
-  }
-  return node;
+  return FN(next, params, body, { isImplicitDo: !ast.expression });
 };
 
 const ReturnStatement = (next, ast, opts) => next(ast.argument);
@@ -172,7 +99,7 @@ const ReturnStatement = (next, ast, opts) => next(ast.argument);
 const CallExpression = (next, ast, opts) => {
   const { callee } = ast;
 
-  const memberChain = maybeThreadMemberSyntax(next, ast).reverse();
+  const memberChain = utils.maybeThreadMemberSyntax(next, ast).reverse();
 
   if (memberChain.length > 2) {
     return t.list([t.symbol("->"), ...memberChain]);
@@ -181,11 +108,7 @@ const CallExpression = (next, ast, opts) => {
   if (bt.isMemberExpression(callee)) {
     if (callee.object.name && window.hasOwnProperty(callee.object.name)) {
       const fn = t.symbol(`js/${callee.object.name}`);
-      return t.list([
-        t.symbol(`.${callee.property.name}`),
-        fn,
-        ...ast.arguments.map(next)
-      ]);
+      return METHOD_CALL(next, callee.property, fn, ast.arguments);
     } else {
       const fn = next(callee, { isCallExpression: true });
       return t.list([...fn.children, ...ast.arguments.map(next)]);
@@ -193,11 +116,10 @@ const CallExpression = (next, ast, opts) => {
   }
   if (window.hasOwnProperty(callee.name)) {
     const fn = t.symbol(`js/${callee.name}`);
-    return t.list([fn, ...ast.arguments.map(next)]);
+    return FN_CALL(next, fn, ast.arguments);
   }
 
-  const fn = next(callee);
-  return t.list([fn, ...ast.arguments.map(next)]);
+  return FN_CALL(next, next(callee), ast.arguments);
 };
 
 const MemberExpression = (next, ast, opts) => {
@@ -205,48 +127,35 @@ const MemberExpression = (next, ast, opts) => {
 
   if (opts.isCallExpression) {
     if (bt.isThisExpression(object)) {
-      return t.list([
-        t.symbol("this-as"),
-        t.symbol("this"),
-        t.list([t.symbol("."), t.symbol("this"), next(property)])
-      ]);
-    } else if (ast.computed) {
-      if (opts.isCallExpression) {
-        return t.list([
-          t.list([t.symbol("aget"), next(object), next(property)])
-        ]);
-      } else {
-        return t.list([t.symbol("aget"), next(object), next(property)]);
-      }
-    } else {
-      return t.list([t.symbol(`.${property.name}`), next(object)]);
-    }
-  } else if (bt.isThisExpression(object)) {
-    return t.list([
-      t.symbol("this-as"),
-      t.symbol("this"),
-      t.list([
-        t.symbol("."),
-        t.symbol("this"),
-        next(property, { isGetter: true })
-      ])
-    ]);
-  } else if (ast.computed) {
-    return t.list([t.symbol("aget"), next(object), next(property)]);
-  } else {
-    const [target, ...props] = getDotProps(ast);
-    if (props.length === 1) {
-      return t.list([
-        t.symbol(`.-${props[0].name}`),
-        next(target, { checkGlobal: true })
+      return THIS_AS("this", [
+        METHOD_CALL(next, property, t.symbol("this"), [])
       ]);
     }
-    return t.list([
-      t.symbol(".."),
-      next(target, { checkGlobal: true }),
-      ...props.map(n => next(n, { isGetter: true }))
-    ]);
+    if (ast.computed) {
+      return FN_CALL(
+        next,
+        FN_CALL(next, t.symbol("aget"), [object, property]),
+        []
+      );
+    }
+    return METHOD_CALL(next, property, next(object), []);
   }
+
+  if (bt.isThisExpression(object)) {
+    return THIS_AS("this", [METHOD_CALL(next, property, t.symbol("this"), [])]);
+  }
+
+  if (ast.computed) {
+    return FN_CALL(next, t.symbol("aget"), [object, property]);
+  }
+
+  const [target, ...props] = utils.getDotProps(ast);
+
+  if (props.length === 1) {
+    return PROP_GET(next, props[0], target);
+  }
+
+  return NESTED_PROPS_GET(next, target, props);
 };
 
 const StringLiteral = (next, ast, opts) => t.StringLiteral(ast.value);
@@ -254,31 +163,24 @@ const StringLiteral = (next, ast, opts) => t.StringLiteral(ast.value);
 const ArrayExpression = (next, ast, opts) =>
   t.ArrayExpression(ast.elements.map(next));
 
-const ObjectExpression = (next, ast, opts) => {
-  const props = ast.properties;
-  return t.ObjectExpression(props.map(next));
-};
+const ObjectExpression = (next, ast, opts) =>
+  t.ObjectExpression(ast.properties.map(next));
 
 const ObjectProperty = (next, ast, opts) =>
   t.ObjectProperty([next(ast.key), next(ast.value)]);
 
-const ThisExpression = (next, ast, opts) =>
-  t.list([t.symbol("this-as"), t.symbol("this")]);
+const ThisExpression = (next, ast, opts) => THIS_AS("this", []);
 
 const AssignmentExpression = (next, ast, opts) => {
-  if (bt.isMemberExpression(ast.left)) {
-    if (isNestedThisExpression(ast.left)) {
-      alterNestedThisExpression("that", ast.left);
-      return t.list([
-        t.symbol("this-as"),
-        t.symbol("that"),
-        t.list([t.symbol("set!"), next(ast.left), next(ast.right)])
-      ]);
-    }
-    return t.list([t.symbol("set!"), next(ast.left), next(ast.right)]);
-  } else {
-    return t.list([t.symbol("set!"), next(ast.left), next(ast.right)]);
+  const expr = t.list([t.symbol("set!"), next(ast.left), next(ast.right)]);
+  if (
+    bt.isMemberExpression(ast.left) &&
+    utils.isNestedThisExpression(ast.left)
+  ) {
+    utils.alterNestedThisExpression("that", ast.left);
+    return THIS_AS("that", [expr]);
   }
+  return expr;
 };
 
 const NewExpression = (next, ast, opts) =>
@@ -289,14 +191,7 @@ const NewExpression = (next, ast, opts) =>
   ]);
 
 const ObjectMethod = (next, ast, opts) =>
-  t.ObjectProperty([
-    next(ast.key),
-    t.list([
-      t.symbol(t.FN),
-      t.vector(ast.params.map(next)),
-      ...ast.body.body.map(next)
-    ])
-  ]);
+  t.ObjectProperty([next(ast.key), FN(next, ast.params, ast.body)]);
 
 const EmptyStatement = (next, ast, opts) => t.EmptyStatement();
 
@@ -308,6 +203,9 @@ const BlockStatement = (next, ast, opts) => {
     );
     const entries = utils.flatMap(d => {
       const { id, init } = d.declarations[0];
+      if (init === null) {
+        return [next(id), t.symbol(t.NIL)];
+      }
       return [next(id), next(init)];
     }, decls);
     const ret = t.list([t.symbol(t.LET), t.vector(entries)]);
@@ -319,61 +217,25 @@ const BlockStatement = (next, ast, opts) => {
   if (opts.isImplicitDo) {
     return ast.body.map(next);
   }
-  return t.list([t.symbol("do"), ...ast.body.map(next)]);
+
+  return DO(ast.body.map(next));
 };
 
 const IfStatement = (next, ast, opts) => {
   const { test, consequent, alternate } = ast;
 
   if (bt.isIfStatement(alternate)) {
-    const entries = utils.getCondEntries(ast).map(n => {
-      if (n === ":else") {
-        return t.keyword("else");
-      }
-      if (n === "nil") {
-        return t.symbol(t.NIL);
-      }
-      if (n.body && n.body.length === 1) {
-        const r = next(n, { isImplicitDo: true });
-        return r[0];
-      }
-      return next(n);
-    });
-    return t.list([t.symbol(t.COND), ...entries]);
+    return COND(next, ast);
   }
-
   if (alternate !== null) {
-    const l = t.list([t.symbol(t.IF), next(test)]);
-    if (consequent.body.length > 1) {
-      l.children.push(next(consequent));
-    } else {
-      l.children.push(...next(consequent, { isImplicitDo: true }));
-    }
-    if (alternate.body.length > 1) {
-      l.children.push(next(alternate));
-    } else {
-      l.children.push(...next(alternate, { isImplicitDo: true }));
-    }
-    return l;
+    return IF(next, test, consequent, alternate);
   }
-  const retWhen = t.list([t.symbol(t.WHEN), next(test)]);
-  const retConseq = next(consequent, { isImplicitDo: true });
-  if (Array.isArray(retConseq)) {
-    retWhen.children.push(...retConseq);
-  } else {
-    retWhen.children.push(retConseq);
-  }
-  return retWhen;
+  return WHEN(next, test, consequent);
 };
 
 const SwitchStatement = (next, ast, opts) => {
   const { discriminant, cases } = ast;
-
-  return t.list([
-    t.symbol(t.CASE),
-    next(discriminant),
-    ...utils.flatMap(next, cases)
-  ]);
+  return CASE(next, discriminant, cases);
 };
 
 const SwitchCase = (next, ast, opts) => {
@@ -401,11 +263,7 @@ const SwitchCase = (next, ast, opts) => {
   if (test === null) {
     return csq;
   }
-
-  if (csq.length > 1) {
-    return [next(test), t.list([t.symbol("do"), ...csq])];
-  }
-  return [next(test), ...csq];
+  return [next(test), csq.length > 1 ? DO(csq) : csq[0]];
 };
 
 const BreakStatement = (next, ast, opts) => t.BreakStatement();
@@ -429,35 +287,25 @@ const ImportDeclaration = (next, ast, opts) => {
   const local = sxs[0][1];
 
   if (imported === "*") {
-    return t.list([
-      t.symbol(t.DEF),
-      local,
-      t.list([t.symbol("js/require"), next(source)])
-    ]);
+    return DEF(local, FN_CALL(next, t.symbol("js/require"), [source]));
   }
-  return t.list([
-    t.symbol(t.DEF),
+
+  return DEF(
     local,
-    t.list([imported, t.list([t.symbol("js/require"), next(source)])])
-  ]);
+    t.list([imported, FN_CALL(next, t.symbol("js/require"), [source])])
+  );
 };
 
 const ConditionalExpression = (next, ast, opts) => {
   const { test, consequent, alternate } = ast;
-  return t.list([
-    t.symbol(t.IF),
-    next(test),
-    next(consequent),
-    next(alternate)
-  ]);
+  return IF(next, test, consequent, alternate);
 };
 
 const LogicalExpression = (next, ast, opts) => {
   const { operator, left, right } = ast;
-  return t.list([
-    t.symbol(utils.normalizeOperator(operator)),
-    next(left),
-    next(right)
+  return FN_CALL(next, t.symbol(utils.normalizeOperator(operator)), [
+    left,
+    right
   ]);
 };
 
@@ -524,12 +372,7 @@ const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
 
 const JSXElement = (next, ast, opts) => {
   const attrs = ast.openingElement.attributes;
-
-  return t.vector([
-    next(ast.openingElement),
-    t.HashMap(attrs ? attrs.map(next) : null),
-    ...ast.children.map(next)
-  ]);
+  return HICCUP_ELEMENT(next, ast.openingElement, attrs, ast.children);
 };
 
 const JSXAttribute = (next, ast, opts) =>

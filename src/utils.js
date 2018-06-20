@@ -31,6 +31,13 @@ function getCondEntries(node, ret = []) {
   ]);
 }
 
+function getDotProps(node, ret = []) {
+  if (bt.isMemberExpression(node.object)) {
+    return getDotProps(node.object, [node.property, ...ret]);
+  }
+  return [node.object, node.property, ...ret];
+}
+
 function normalizeOperator(op) {
   if (op === "==") {
     return "=";
@@ -56,10 +63,58 @@ function normalizeOperator(op) {
   return op;
 }
 
+function maybeThreadMemberSyntax(next, node) {
+  if (bt.isCallExpression(node)) {
+    if (bt.isCallExpression(node.callee.object)) {
+      return [
+        t.list([
+          next(node.callee.property, { isCall: true }),
+          ...node.arguments.map(next)
+        ]),
+        ...maybeThreadMemberSyntax(next, node.callee.object)
+      ];
+    }
+
+    let f;
+
+    if (
+      bt.isIdentifier(node.callee) &&
+      window.hasOwnProperty(node.callee.name)
+    ) {
+      f = t.symbol(`js/${node.callee.name}`);
+    } else {
+      f = next(node.callee);
+    }
+
+    return [t.list([f, ...node.arguments.map(next)])];
+  }
+}
+
+function isNestedThisExpression(node) {
+  if (bt.isThisExpression(node.object)) {
+    return node;
+  }
+  if (node.object.hasOwnProperty("object")) {
+    return isNestedThisExpression(node.object);
+  }
+  return false;
+}
+
+function alterNestedThisExpression(name, node) {
+  const thisNode = isNestedThisExpression(node);
+  if (thisNode) {
+    thisNode.object = bt.identifier(name);
+  }
+}
+
 module.exports = {
   isComponentElement,
   flatMap,
   takeWhile,
   getCondEntries,
-  normalizeOperator
+  getDotProps,
+  normalizeOperator,
+  maybeThreadMemberSyntax,
+  isNestedThisExpression,
+  alterNestedThisExpression
 };
