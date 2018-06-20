@@ -10,7 +10,11 @@ function takeWhile(pred, [x, ...xs], ret = []) {
   if (pred(x)) {
     return takeWhile(pred, xs, ret.concat(x));
   }
-  return [ret, [x, ...xs]];
+  if (x === undefined) {
+    return [ret];
+  } else {
+    return [ret, [x, ...xs]];
+  }
 }
 
 function getCondEntries(node, ret = []) {

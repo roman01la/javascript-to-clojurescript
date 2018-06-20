@@ -2,6 +2,9 @@ const bt = require("babel-types");
 const t = require("./cljs-types");
 const utils = require("./utils");
 
+const jsTypes = require("./ast-types/javascript");
+const jsxTypes = require("./ast-types/jsx");
+
 function makeDEFN(next, id, params, body) {
   const bodies = next(body, { isImplicitDo: true });
 
@@ -307,7 +310,11 @@ const BlockStatement = (next, ast, opts) => {
       const { id, init } = d.declarations[0];
       return [next(id), next(init)];
     }, decls);
-    return t.list([t.symbol(t.LET), t.vector(entries), ...rest.map(next)]);
+    const ret = t.list([t.symbol(t.LET), t.vector(entries)]);
+    if (rest) {
+      ret.children.push(...rest.map(next));
+    }
+    return ret;
   }
   if (opts.isImplicitDo) {
     return ast.body.map(next);
@@ -454,9 +461,63 @@ const LogicalExpression = (next, ast, opts) => {
   ]);
 };
 
-const NullLiteral = (next, ret) => t.symbol(t.NIL);
+const NullLiteral = (next, ast, opts) => t.symbol(t.NIL);
 
-const BooleanLiteral = (next, ret) => t.BooleanLiteral(ast.value);
+const BooleanLiteral = (next, ast, opts) => t.BooleanLiteral(ast.value);
+
+const RegExpLiteral = (next, ast, opts) => t.RegExpLiteral(ast);
+
+const TryStatement = (next, ast, opts) => {
+  const { block, handler, finalizer } = ast;
+  const body = next(block, { isImplicitDo: true });
+  const expr = t.list([t.symbol(t.TRY)]);
+
+  if (Array.isArray(body)) {
+    expr.children.push(...body);
+  } else {
+    expr.children.push(body);
+  }
+
+  expr.children.push(t.list([t.symbol(t.CATCH), ...next(handler)]));
+
+  if (finalizer) {
+    const finalBody = next(finalizer, { isImplicitDo: true });
+    if (Array.isArray(finalBody)) {
+      expr.children.push(t.list([t.symbol(t.FINALLY), ...finalBody]));
+    } else {
+      expr.children.push(t.list([t.symbol(t.FINALLY), finalBody]));
+    }
+  }
+  return expr;
+};
+
+const CatchClause = (next, ast, opts) => {
+  const { param, body } = ast;
+
+  const catchBody = next(body, { isImplicitDo: true });
+
+  if (Array.isArray(catchBody)) {
+    return [t.symbol("js/Object"), next(param), ...catchBody];
+  } else {
+    return [t.symbol("js/Object"), next(param), catchBody];
+  }
+};
+
+const ThrowStatement = (next, ast, opts) =>
+  t.list([t.symbol(t.THROW), next(ast.argument)]);
+
+const TemplateLiteral = (next, ast, opts) => {
+  const { expressions, quasis } = ast;
+  const args = quasis.reduce((ret, q, idx) => {
+    const s = t.StringLiteral(q.value.raw);
+    if (q === quasis[quasis.length - 1]) {
+      return ret.concat(s);
+    } else {
+      return ret.concat([s, next(expressions[idx])]);
+    }
+  }, []);
+  return t.list([t.symbol("str"), ...args]);
+};
 
 /* ========= JSX ========= */
 const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
@@ -485,7 +546,7 @@ const JSXIdentifier = (next, ast, opts) =>
 const JSXText = (next, ast, opts) =>
   ast.value.trim() !== "" ? t.StringLiteral(ast.value) : t.EmptyStatement();
 
-module.exports = {
+const transforms = {
   File,
   Program,
   ExpressionStatement,
@@ -520,6 +581,11 @@ module.exports = {
   LogicalExpression,
   NullLiteral,
   BooleanLiteral,
+  RegExpLiteral,
+  TryStatement,
+  CatchClause,
+  ThrowStatement,
+  TemplateLiteral,
 
   JSXExpressionContainer,
   JSXElement,
@@ -528,3 +594,17 @@ module.exports = {
   JSXIdentifier,
   JSXText
 };
+
+if (true) {
+  const missingJSTypes = jsTypes.filter(
+    t => Object.keys(transforms).includes(t) === false
+  );
+  const missingJSXTypes = jsxTypes.filter(
+    t => Object.keys(transforms).includes(t) === false
+  );
+
+  console.warn("Missing JS types", missingJSTypes);
+  console.warn("Missing JSX types", missingJSXTypes);
+}
+
+module.exports = transforms;

@@ -13,11 +13,6 @@ const symbol = name => ({
   name
 });
 
-const NumericLiteral = value => ({
-  type: "NumericLiteral",
-  value
-});
-
 const list = children => ({
   type: "list",
   children
@@ -30,6 +25,19 @@ const vector = children => ({
 
 const keyword = value => ({
   type: "keyword",
+  value
+});
+
+const tagged = (tag, expr) => ({
+  type: "tagged",
+  tag,
+  expr
+});
+
+// ==========================
+
+const NumericLiteral = value => ({
+  type: "NumericLiteral",
   value
 });
 
@@ -58,11 +66,21 @@ const ObjectProperty = children => ({
   children
 });
 
-const tagged = (tag, expr) => ({
-  type: "tagged",
-  tag,
-  expr
+const EmptyStatement = () => ({
+  type: "EmptyStatement"
 });
+
+const BreakStatement = () => ({
+  type: "BreakStatement"
+});
+
+const RegExpLiteral = ({ pattern, flags }) => ({
+  type: "RegExpLiteral",
+  pattern,
+  flags
+});
+
+// ==========================
 
 const HashMap = children => ({
   type: "HashMap",
@@ -74,13 +92,7 @@ const MapEntry = (key, value) => ({
   children: [key, value]
 });
 
-const EmptyStatement = () => ({
-  type: "EmptyStatement"
-});
-
-const BreakStatement = () => ({
-  type: "BreakStatement"
-});
+// ============================
 
 const DEF = "def";
 const DEFN = "defn";
@@ -91,11 +103,13 @@ const WHEN = "when";
 const COND = "cond";
 const CASE = "case";
 const NIL = "nil";
+const TRY = "try";
+const CATCH = "catch";
+const FINALLY = "finally";
+const THROW = "throw";
+const DO = "throw";
 
 module.exports = {
-  program,
-  comment,
-  symbol,
   NumericLiteral,
   StringLiteral,
   BooleanLiteral,
@@ -104,12 +118,19 @@ module.exports = {
   ObjectProperty,
   EmptyStatement,
   BreakStatement,
+  RegExpLiteral,
+
+  program,
+  comment,
+  symbol,
   list,
   vector,
   tagged,
   keyword,
+
   HashMap,
   MapEntry,
+
   DEF,
   DEFN,
   FN,
@@ -118,5 +139,10 @@ module.exports = {
   WHEN,
   COND,
   CASE,
-  NIL
+  NIL,
+  TRY,
+  CATCH,
+  FINALLY,
+  THROW,
+  DO
 };
