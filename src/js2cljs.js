@@ -95,6 +95,9 @@ function normalizeOperator(op) {
   if (op === "&&") {
     return "and";
   }
+  if (op === "!") {
+    return "not";
+  }
   return op;
 }
 
@@ -148,7 +151,10 @@ const transformRec = (ast, opts = {}) => {
     return expr;
   }
   if (bt.isUnaryExpression(ast)) {
-    return t.list([t.symbol(ast.operator), transformRec(ast.argument)]);
+    return t.list([
+      t.symbol(normalizeOperator(ast.operator)),
+      transformRec(ast.argument)
+    ]);
   }
   if (bt.isIdentifier(ast)) {
     if (opts.isGetter) {
