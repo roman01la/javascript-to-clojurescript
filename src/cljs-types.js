@@ -38,6 +38,11 @@ const StringLiteral = value => ({
   value
 });
 
+const BooleanLiteral = value => ({
+  type: "BooleanLiteral",
+  value
+});
+
 const ArrayExpression = children => ({
   type: "ArrayExpression",
   children
@@ -93,6 +98,7 @@ module.exports = {
   symbol,
   NumericLiteral,
   StringLiteral,
+  BooleanLiteral,
   ArrayExpression,
   ObjectExpression,
   ObjectProperty,

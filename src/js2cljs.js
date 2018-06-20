@@ -572,9 +572,12 @@ const transformRec = (ast, opts = {}) => {
   if (bt.isNullLiteral(ast)) {
     return t.symbol(t.NIL);
   }
+  if (bt.isBooleanLiteral(ast)) {
+    return t.BooleanLiteral(ast.value);
+  }
 
   console.info(ast);
   throw new Error(`${ast.type} is not implemented`);
 };
 
-module.exports = transformRec;
+module.exports = { transformRec, normalizeOperator };

@@ -11,6 +11,9 @@ function generate(node) {
   if (node.type === "StringLiteral") {
     return JSON.stringify(node.value);
   }
+  if (node.type === "BooleanLiteral") {
+    return node.value;
+  }
   if (node.type === "list") {
     const items = node.children;
     return `(${items.map(generate).join(" ")})\n\n`;

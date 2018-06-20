@@ -4,7 +4,7 @@ const { parse } = require("babylon");
 const zprint = require("zprint-clj");
 
 const generate = require("./cljs-gen");
-const transformRec = require("./js2cljs");
+const { transformRec } = require("./js2cljs");
 
 // const jscode = fs.readFileSync(path.join(__dirname, "test.js"), "utf8");
 
