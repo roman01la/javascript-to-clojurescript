@@ -64,13 +64,13 @@ const tagged = (tag, expr) => ({
   expr
 });
 
-const hashMap = children => ({
-  type: "hashMap",
+const HashMap = children => ({
+  type: "HashMap",
   children
 });
 
-const mapEntry = (key, value) => ({
-  type: "mapEntry",
+const MapEntry = (key, value) => ({
+  type: "MapEntry",
   children: [key, value]
 });
 
@@ -108,8 +108,8 @@ module.exports = {
   vector,
   tagged,
   keyword,
-  hashMap,
-  mapEntry,
+  HashMap,
+  MapEntry,
   DEF,
   DEFN,
   FN,

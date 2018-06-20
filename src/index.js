@@ -4,11 +4,11 @@ const { parse } = require("babylon");
 const zprint = require("zprint-clj");
 
 const generate = require("./cljs-gen");
-const { transformRec } = require("./js2cljs");
+const transformAST = require("./js2cljs");
 
 // const jscode = fs.readFileSync(path.join(__dirname, "test.js"), "utf8");
 
-// const ast = transformRec(parse(jscode, { plugins: ["jsx"] }));
+// const ast = transformAST(parse(jscode, { plugins: ["jsx"] }));
 
 // console.log(JSON.stringify(ast, null, 2));
 // const genast = generate(ast);
@@ -17,7 +17,7 @@ const { transformRec } = require("./js2cljs");
 // console.log(code);
 
 const toLispAST = code =>
-  transformRec(parse(code, { sourceType: "module", plugins: ["jsx"] }));
+  transformAST(parse(code, { sourceType: "module", plugins: ["jsx"] }));
 
 const transform = code =>
   zprint(generate(toLispAST(code)), "sample", {

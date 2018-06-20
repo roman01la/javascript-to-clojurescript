@@ -1,5 +1,4 @@
 const js2cljs = require("./index");
-const generate = require("./cljs-gen");
 
 window.html = j2c.core.compileHiccup;
 
