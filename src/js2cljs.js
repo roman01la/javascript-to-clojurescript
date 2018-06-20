@@ -515,7 +515,7 @@ const transformRec = (ast, opts = {}) => {
     }
     return [transformRec(test), ...csq];
   }
-  if (bt.BreakStatement(ast)) {
+  if (bt.isBreakStatement(ast)) {
     return t.BreakStatement();
   }
   if (bt.isImportDeclaration(ast)) {
