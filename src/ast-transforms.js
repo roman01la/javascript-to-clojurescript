@@ -191,8 +191,18 @@ const MemberExpression = (next, ast, opts) => {
 
 const StringLiteral = (next, ast, opts) => t.StringLiteral(ast.value);
 
-const ArrayExpression = (next, ast, opts) =>
-  t.ArrayExpression(ast.elements.map(next));
+const ArrayExpression = (next, ast, opts) => {
+  const { elements } = ast;
+
+  return elements.reduce((ret, el) => {
+    if (bt.isSpreadElement(el)) {
+      return t.list([t.symbol(".concat"), ret, next(el)]);
+    } else {
+      ret.children.push(el);
+      return ret;
+    }
+  }, t.ArrayExpression([]));
+};
 
 const ObjectExpression = (next, ast, opts) =>
   t.ObjectExpression(ast.properties.map(next));
@@ -421,6 +431,8 @@ const TemplateLiteral = (next, ast, opts) => {
 const DebuggerStatement = (next, ast, opts) =>
   FN_CALL(next, t.symbol("js-debugger"));
 
+const SpreadElement = (next, ast, opts) => next(ast.argument);
+
 /* ========= JSX ========= */
 const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
 
@@ -486,6 +498,7 @@ const transforms = {
   ThrowStatement,
   TemplateLiteral,
   DebuggerStatement,
+  SpreadElement,
 
   JSXExpressionContainer,
   JSXElement,
