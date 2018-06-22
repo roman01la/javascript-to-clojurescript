@@ -367,6 +367,9 @@ const TemplateLiteral = (next, ast, opts) => {
   return t.list([t.symbol("str"), ...args]);
 };
 
+const DebuggerStatement = (next, ast, opts) =>
+  FN_CALL(next, t.symbol("js-debugger"));
+
 /* ========= JSX ========= */
 const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
 
@@ -429,6 +432,7 @@ const transforms = {
   CatchClause,
   ThrowStatement,
   TemplateLiteral,
+  DebuggerStatement,
 
   JSXExpressionContainer,
   JSXElement,

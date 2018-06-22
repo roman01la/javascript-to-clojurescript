@@ -29,7 +29,7 @@ const DEFN = (next, id, params, body) => {
   return l;
 };
 
-const FN_CALL = (next, fn, args) => t.list([fn, ...args.map(next)]);
+const FN_CALL = (next, fn, args = []) => t.list([fn, ...args.map(next)]);
 
 const METHOD_CALL = (next, method, object, args) =>
   t.list([next(method, { isCall: true }), object, ...args.map(next)]);
