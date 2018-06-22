@@ -18,7 +18,9 @@ const addSyntaxSugar = require("./syntax-builder");
 // console.log(code);
 
 const toLispAST = code =>
-  transformAST(parse(code, { sourceType: "module", plugins: ["jsx"] }));
+  transformAST(
+    parse(code, { sourceType: "module", plugins: ["jsx", "objectRestSpread"] })
+  );
 
 const transform = code =>
   zprint(generate(toLispAST(code)), "sample", {

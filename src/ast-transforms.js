@@ -198,14 +198,28 @@ const ArrayExpression = (next, ast, opts) => {
     if (bt.isSpreadElement(el)) {
       return t.list([t.symbol(".concat"), ret, next(el)]);
     } else {
-      ret.children.push(el);
+      ret.children.push(next(el));
       return ret;
     }
   }, t.ArrayExpression([]));
 };
 
-const ObjectExpression = (next, ast, opts) =>
-  t.ObjectExpression(ast.properties.map(next));
+const ObjectExpression = (next, ast, opts) => {
+  const { properties } = ast;
+  return properties.reduce((ret, el) => {
+    if (bt.isSpreadProperty(el)) {
+      return t.list([t.symbol("js/Object.assign"), ret, next(el)]);
+    } else {
+      const lastChild = ret.children[ret.children.length - 1];
+      if (lastChild && lastChild.type !== "ObjectProperty") {
+        ret.children.push(t.ObjectExpression([next(el)]));
+      } else {
+        ret.children.push(next(el));
+      }
+      return ret;
+    }
+  }, t.ObjectExpression([]));
+};
 
 const ObjectProperty = (next, ast, opts) =>
   t.ObjectProperty([next(ast.key), next(ast.value)]);
@@ -432,6 +446,7 @@ const DebuggerStatement = (next, ast, opts) =>
   FN_CALL(next, t.symbol("js-debugger"));
 
 const SpreadElement = (next, ast, opts) => next(ast.argument);
+const SpreadProperty = (next, ast, opts) => next(ast.argument);
 
 /* ========= JSX ========= */
 const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
@@ -499,6 +514,7 @@ const transforms = {
   TemplateLiteral,
   DebuggerStatement,
   SpreadElement,
+  SpreadProperty,
 
   JSXExpressionContainer,
   JSXElement,

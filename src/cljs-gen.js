@@ -4,7 +4,7 @@ function generate(node) {
   if (codegen.hasOwnProperty(node.type)) {
     return codegen[node.type](generate, node);
   }
-  console.error(node);
+  console.info(node);
   throw new Error(`${node.type} is not implemented`);
 }
 
