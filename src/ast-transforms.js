@@ -1,4 +1,5 @@
 const bt = require("babel-types");
+const invariant = require("invariant");
 const t = require("./cljs-types");
 const utils = require("./utils");
 
@@ -36,8 +37,38 @@ const BinaryExpression = (next, ast, opts) => {
   ]);
 };
 
-const UnaryExpression = (next, ast, opts) =>
-  t.list([t.symbol(utils.normalizeOperator(ast.operator)), next(ast.argument)]);
+const DeleteStatement = (next, ast, opts) => {
+  const { argument } = ast;
+
+  invariant(
+    bt.isMemberExpression(argument),
+    `Can't transform "delete" for non MemberExpression node`
+  );
+
+  const prop = next(argument.property);
+
+  invariant(
+    prop.value !== undefined || prop.name !== undefined,
+    `Couldn't infer "delete" key. Should be a symbol or a number`
+  );
+
+  const property =
+    prop.type === "StringLiteral"
+      ? prop
+      : prop.type === "NumericLiteral"
+        ? prop
+        : t.StringLiteral(prop.name);
+
+  return t.list([t.symbol("js-delete"), next(argument.object), property]);
+};
+
+const UnaryExpression = (next, ast, opts) => {
+  const { operator, argument } = ast;
+  if (operator === "delete") {
+    return DeleteStatement(next, ast, opts);
+  }
+  return t.list([t.symbol(utils.normalizeOperator(operator)), next(argument)]);
+};
 
 const Identifier = (next, ast, opts) => {
   if (opts.isGetter) {
