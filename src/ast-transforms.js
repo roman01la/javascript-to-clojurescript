@@ -131,6 +131,10 @@ const CallExpression = (next, ast, opts) => {
   const { callee } = ast;
 
   const memberChain = utils.maybeThreadMemberSyntax(next, ast).reverse();
+  const isSpreadCall = ast.arguments.some(arg => bt.isSpreadElement(arg));
+  const spreadArgs = isSpreadCall
+    ? ArrayExpression(next, { elements: ast.arguments }, opts)
+    : undefined;
 
   if (memberChain.length > 2) {
     return t.list([t.symbol("->"), ...memberChain]);
@@ -139,15 +143,43 @@ const CallExpression = (next, ast, opts) => {
   if (bt.isMemberExpression(callee)) {
     if (callee.object.name && window.hasOwnProperty(callee.object.name)) {
       const fn = t.symbol(`js/${callee.object.name}`);
+      if (isSpreadCall) {
+        return t.list([
+          t.symbol(".apply"),
+          t.list([next(callee.property, { isDotGetter: true }), fn]),
+          fn,
+          spreadArgs
+        ]);
+      }
       return METHOD_CALL(next, callee.property, fn, ast.arguments);
     } else {
       const fn = next(callee, { isCallExpression: true });
+      if (isSpreadCall) {
+        const object = fn.children[1];
+        return t.list([
+          t.symbol(".apply"),
+          t.list([next(callee.property, { isDotGetter: true }), object]),
+          object,
+          spreadArgs
+        ]);
+      }
       return t.list([...fn.children, ...ast.arguments.map(next)]);
     }
   }
   if (window.hasOwnProperty(callee.name)) {
     const fn = t.symbol(`js/${callee.name}`);
+    if (isSpreadCall) {
+      return t.list([t.symbol(".apply"), fn, t.symbol(t.NIL), spreadArgs]);
+    }
     return FN_CALL(next, fn, ast.arguments);
+  }
+  if (isSpreadCall) {
+    return t.list([
+      t.symbol(".apply"),
+      next(callee),
+      t.symbol(t.NIL),
+      spreadArgs
+    ]);
   }
 
   return FN_CALL(next, next(callee), ast.arguments);
