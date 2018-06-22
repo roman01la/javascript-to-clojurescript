@@ -327,6 +327,26 @@ const ImportDeclaration = (next, ast, opts) => {
   );
 };
 
+const ExportDefaultDeclaration = (next, ast, opts) => {
+  const { declaration } = ast;
+  return t.list([
+    t.symbol("set!"),
+    t.list([t.symbol(".-default"), t.symbol("js/exports")]),
+    next(declaration)
+  ]);
+};
+
+const ExportNamedDeclaration = (next, ast, opts) => {
+  const declaration = next(ast.declaration);
+  const id = declaration.children[1];
+  const exporter = t.list([
+    t.symbol("set!"),
+    t.list([t.symbol(`.-${id.name}`), t.symbol("js/exports")]),
+    id
+  ]);
+  return DO([declaration, exporter]);
+};
+
 const ConditionalExpression = (next, ast, opts) => {
   const { test, consequent, alternate } = ast;
   return IF(next, test, consequent, alternate);
@@ -454,6 +474,8 @@ const transforms = {
   SwitchCase,
   BreakStatement,
   ImportDeclaration,
+  ExportDefaultDeclaration,
+  ExportNamedDeclaration,
   ConditionalExpression,
   LogicalExpression,
   NullLiteral,
