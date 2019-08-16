@@ -130,3 +130,7 @@ a {
     max-width: 100%;
   }
 }
+
+.tabs .btn.active {
+  font-weight: 600;
+}

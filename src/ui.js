@@ -146,3 +146,32 @@ select.addEventListener("change", e => {
   const val = e.target.value;
   window.location.hash = val;
 });
+
+const tabToView = {
+  "btn-cljs": document.querySelector("#view-cljs"),
+  "btn-ccljs": document.querySelector("#view-ccljs"),
+  "btn-console": document.querySelector("#view-console"),
+  "btn-dom": document.querySelector("#view-dom")
+};
+
+const tabs = document.querySelectorAll(".tabs .btn");
+Array.from(tabs).forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelector(".tabs .btn.active").classList.remove("active");
+    btn.classList.add("active");
+    tabToView[btn.id].style.display = "flex";
+
+    if (btn.id === "btn-ccljs") {
+      cljsCompiledCodeEditor.setValue(cljsCompiledCodeEditor.getValue());
+    }
+    if (btn.id === "btn-console") {
+      stdoutEditor.setValue(stdoutEditor.getValue());
+    }
+
+    Object.entries(tabToView).forEach(([id, view]) => {
+      if (id !== btn.id) {
+        view.style.display = "none";
+      }
+    });
+  });
+});

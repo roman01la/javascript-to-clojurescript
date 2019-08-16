@@ -20,6 +20,12 @@
           <span>Examples:</span>
         </span>
       </div>
+      <div class="tabs">
+        <button class="btn active" id="btn-cljs">ClojureScript</button>
+        <button class="btn" id="btn-ccljs">Compiled ClojureScript</button>
+        <button class="btn" id="btn-console">Console</button>
+        <button class="btn" id="btn-dom">DOM</button>
+      </div>
       <a href="https://github.com/roman01la/javascript-to-clojurescript"
         >GitHub</a
       >
@@ -31,25 +37,21 @@
           <div class="label">JavaScript</div>
           <div id="jsCode"></div>
         </div>
-        <div class="col ">
+        <div class="col " id="view-cljs">
           <div class="label">ClojureScript</div>
           <div id="cljsCode"></div>
         </div>
-      </div>
-      <div class="row ">
-        <div class="col ">
+        <div class="col " id="view-ccljs" style="display:none;">
           <div class="label">Compiled ClojureScript</div>
           <div id="cljsCompiledCode"></div>
         </div>
-        <div class="col ">
-          <div class="row">
-            <div class="label">Console</div>
-            <div id="stdout"></div>
-          </div>
-          <div class="row react-root">
-            <div class="label">DOM</div>
-            <div id="react-root"></div>
-          </div>
+        <div class="col " id="view-console" style="display:none;">
+          <div class="label">Console</div>
+          <div id="stdout"></div>
+        </div>
+        <div class="col " id="view-dom" style="display:none;">
+          <div class="label">DOM</div>
+          <div id="react-root"></div>
         </div>
       </div>
     </div>
