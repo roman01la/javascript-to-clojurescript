@@ -259,7 +259,17 @@ const ObjectProperty = (next, ast, opts) =>
 const ThisExpression = (next, ast, opts) => THIS_AS("this", []);
 
 const AssignmentExpression = (next, ast, opts) => {
+  if (bt.isMemberExpression(ast.left) && ast.left.computed) {
+    return t.list([
+      t.symbol("aset"),
+      next(ast.left.object),
+      next(ast.left.property),
+      next(ast.right)
+    ]);
+  }
+
   const expr = t.list([t.symbol("set!"), next(ast.left), next(ast.right)]);
+
   if (
     bt.isMemberExpression(ast.left) &&
     utils.isNestedThisExpression(ast.left)
