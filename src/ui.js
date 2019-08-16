@@ -5,16 +5,26 @@ window.html = j2c.core.compileHiccup;
 const overlay = document.querySelector(".popup-overlay");
 const popup = document.querySelector(".popup");
 
+const openPopup = () => {
+  popup.style.display = "block";
+  overlay.style.display = "block";
+};
+
 const closePopup = () => {
   popup.remove();
   overlay.remove();
 };
 
-overlay.addEventListener("click", closePopup);
-window["close-btn"].addEventListener("click", closePopup);
-
-if (popup.clientWidth >= document.body.clientWidth) {
-  popup.style.width = `${document.body.clientWidth - 96}px`;
+if (localStorage.getItem("seen-popup?") === "1") {
+  closePopup();
+} else {
+  openPopup();
+  localStorage.setItem("seen-popup?", "1");
+  overlay.addEventListener("click", closePopup);
+  window["close-btn"].addEventListener("click", closePopup);
+  if (popup.clientWidth >= document.body.clientWidth) {
+    popup.style.width = `${document.body.clientWidth - 96}px`;
+  }
 }
 
 function router({ urls, fn }) {
