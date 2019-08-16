@@ -56,8 +56,8 @@ const DeleteStatement = (next, ast, opts) => {
     prop.type === "StringLiteral"
       ? prop
       : prop.type === "NumericLiteral"
-        ? prop
-        : t.StringLiteral(prop.name);
+      ? prop
+      : t.StringLiteral(prop.name);
 
   return t.list([t.symbol("js-delete"), next(argument.object), property]);
 };
@@ -480,6 +480,11 @@ const DebuggerStatement = (next, ast, opts) =>
 const SpreadElement = (next, ast, opts) => next(ast.argument);
 const SpreadProperty = (next, ast, opts) => next(ast.argument);
 
+const ArrayPattern = (next, ast, opts) => {
+  const { elements } = ast;
+  return t.vector(elements.map(el => next(el)));
+};
+
 /* ========= JSX ========= */
 const JSXExpressionContainer = (next, ast, opts) => next(ast.expression);
 
@@ -547,6 +552,7 @@ const transforms = {
   DebuggerStatement,
   SpreadElement,
   SpreadProperty,
+  ArrayPattern,
 
   JSXExpressionContainer,
   JSXElement,
