@@ -1,98 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript to ClojureScript translator</title>
+    <link rel="stylesheet" href="codemirror.css" />
+    <link rel="stylesheet" href="main.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JavaScript to ClojureScript translator</title>
-  <link rel="stylesheet" href="codemirror.css">
-  <link rel="stylesheet" href="main.css">
-</head>
-
-<body>
-
-  <header class="app-header">
-    <div>
-      <span>JavaScript to ClojureScript translator</span>
-      <span class="selector">
-        <span>Examples:</span>
-      </span>
-    </div>
-    <a href="https://github.com/roman01la/javascript-to-clojurescript">GitHub</a>
-  </header>
-
-  <div id="root" class="col">
-    <div class=" row ">
-      <div class="col ">
-        <div class="label">JavaScript</div>
-        <div id="jsCode"></div>
+  <body>
+    <header class="app-header">
+      <div>
+        <span>JavaScript to ClojureScript translator</span>
+        <span class="selector">
+          <span>Examples:</span>
+        </span>
       </div>
-      <div class="col ">
-        <div class="label">ClojureScript</div>
-        <div id="cljsCode"></div>
-      </div>
-    </div>
-    <div class="row ">
-      <div class="col ">
-        <div class="label">Compiled ClojureScript</div>
-        <div id="cljsCompiledCode"></div>
-      </div>
-      <div class="col ">
-        <div class="row">
-          <div class="label">Console</div>
-          <div id="stdout"></div>
+      <a href="https://github.com/roman01la/javascript-to-clojurescript"
+        >GitHub</a
+      >
+    </header>
+
+    <div id="root" class="col">
+      <div class=" row ">
+        <div class="col ">
+          <div class="label">JavaScript</div>
+          <div id="jsCode"></div>
         </div>
-        <div class="row react-root">
-          <div class="label">DOM</div>
-          <div id="react-root"></div>
+        <div class="col ">
+          <div class="label">ClojureScript</div>
+          <div id="cljsCode"></div>
         </div>
       </div>
+      <div class="row ">
+        <div class="col ">
+          <div class="label">Compiled ClojureScript</div>
+          <div id="cljsCompiledCode"></div>
+        </div>
+        <div class="col ">
+          <div class="row">
+            <div class="label">Console</div>
+            <div id="stdout"></div>
+          </div>
+          <div class="row react-root">
+            <div class="label">DOM</div>
+            <div id="react-root"></div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="popup-overlay"></div>
+    <div class="popup-overlay"></div>
 
-  <div class="popup">
-    <h1>JavaScript to ClojureScript translator</h1>
-    <div>
-      <p>This tool tries to translate as much JavaScript code into ClojureScript as it can. Keep in mind that it might fail
-        or the result will be non-idiomatic Clojure code due to substantial differences between languages.</p>
-      <p>
-        <small>e.g. Clojure explicitly distincts global and local vars, but JavaScript does not</small>
-        <small>
-          <pre>(def x 1) ;; global
+    <div class="popup">
+      <h1>JavaScript to ClojureScript translator</h1>
+      <div>
+        <p>
+          This tool tries to translate as much JavaScript code into
+          ClojureScript as it can. Keep in mind that it might fail or the result
+          will be non-idiomatic Clojure code due to substantial differences
+          between languages.
+        </p>
+        <p>
+          <small
+            >e.g. Clojure explicitly distincts global and local vars, but
+            JavaScript does not</small
+          >
+          <small>
+            <pre>
+(def x 1) ;; global
 (let [x 2] ;; local
-  (/ x 2))</pre>
-        </small>
-      </p>
-      <p>
-        <small>Clojure's data structures are immutable by defalt</small>
-        <small>
-          <pre>(let [x {}]
+  (/ x 2))</pre
+            >
+          </small>
+        </p>
+        <p>
+          <small>Clojure's data structures are immutable by defalt</small>
+          <small>
+            <pre>
+(let [x {}]
   [(assoc x :y 1) x])
-  ;; [{:y 1} {}]</pre>
-        </small>
-      </p>
-      <p>Use for educational purpose.</p>
-      <p>
-        <small>Ask questions
-          <a href="https://twitter.com/roman01la" target="blank_">@roman01la</a>
-        </small>
-      </p>
+  ;; [{:y 1} {}]</pre
+            >
+          </small>
+        </p>
+        <p>Use for educational purpose.</p>
+        <p>
+          <small
+            >Ask questions
+            <a href="https://twitter.com/roman01la" target="blank_"
+              >@roman01la</a
+            >
+          </small>
+        </p>
+      </div>
+      <button class="btn" id="close-btn">&times; close</button>
     </div>
-    <button class="btn" id="close-btn">&times; close</button>
-  </div>
 
-  <script src="vendor/codemirror.js"></script>
-  <script src="vendor/javascript.js"></script>
-  <script src="vendor/clojure.js"></script>
+    <script src="vendor/codemirror.js"></script>
+    <script src="vendor/javascript.js"></script>
+    <script src="vendor/clojure.js"></script>
 
-  <script src="https://unpkg.com/react@16.4.1/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@16.4.1/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react@16.4.1/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@16.4.1/umd/react-dom.production.min.js"></script>
 
-  <script src="compiler.js "></script>
-  <script src="bundle.js "></script>
-
-</body>
-
+    <script src="compiler.js "></script>
+    <script src="bundle.js "></script>
+  </body>
 </html>
