@@ -3,10 +3,16 @@ const utils = require("./utils");
 
 const DEF = (id, init) => t.list([t.symbol(t.DEF), id, init]);
 
-const FN = (next, params, body, opts = { isImplicitDo: true }) => {
+const FN = (next, id, params, body, opts = { isImplicitDo: true }) => {
   const bodies = next(body, opts);
 
-  const l = t.list([t.symbol(t.FN), t.vector(params.map(next))]);
+  const larr = [t.symbol(t.FN)];
+  if (id !== null) {
+    larr.push(next(id));
+  }
+  larr.push(t.vector(params.map(next)));
+
+  const l = t.list(larr);
 
   if (Array.isArray(bodies)) {
     l.children.push(...bodies);

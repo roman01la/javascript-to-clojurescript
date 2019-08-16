@@ -102,7 +102,7 @@ const VariableDeclarator = (next, ast, opts) => {
     return DEFN(next, id, params, body);
   }
 
-  return DEF(next(id), next(init));
+  return DEF(next(id), next(init, { isVar: true }));
 };
 
 const FunctionDeclaration = (next, ast, opts) => {
@@ -113,8 +113,8 @@ const FunctionDeclaration = (next, ast, opts) => {
 const FunctionExpression = (next, ast, opts) => {
   const { id, params, body } = ast;
 
-  if (id === null) {
-    return FN(next, params, body);
+  if (id === null || opts.isVar) {
+    return FN(next, id, params, body);
   } else {
     return DEFN(next, id, params, body);
   }
@@ -122,7 +122,7 @@ const FunctionExpression = (next, ast, opts) => {
 
 const ArrowFunctionExpression = (next, ast, opts) => {
   const { params, body } = ast;
-  return FN(next, params, body, { isImplicitDo: !ast.expression });
+  return FN(next, null, params, body, { isImplicitDo: !ast.expression });
 };
 
 const ReturnStatement = (next, ast, opts) => next(ast.argument);
@@ -278,7 +278,7 @@ const NewExpression = (next, ast, opts) =>
   ]);
 
 const ObjectMethod = (next, ast, opts) =>
-  t.ObjectProperty([next(ast.key), FN(next, ast.params, ast.body)]);
+  t.ObjectProperty([next(ast.key), FN(next, null, ast.params, ast.body)]);
 
 const EmptyStatement = (next, ast, opts) => t.EmptyStatement();
 

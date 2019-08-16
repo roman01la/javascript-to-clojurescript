@@ -6,7 +6,7 @@ const hello = function(msg) {
   return msg;
 };
 
-const hello = function fn(msg) {
+const hello = function myfn(msg) {
   return msg;
 };
 
