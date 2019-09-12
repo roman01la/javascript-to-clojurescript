@@ -20,4 +20,5 @@ _Clojure's data structures are immutable by defalt_
 
 Use for educational purpose.
 
-Ask questions [@roman01la](https://twitter.com/roman01la)
+## How to contribute
+If something is not translated properly, file an issue
