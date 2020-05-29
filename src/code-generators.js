@@ -44,7 +44,13 @@ const BreakStatement = (next, node) => undefined;
 
 const ObjectProperty = (next, node) => {
   const [key, value] = node.children;
-  return `:${next(key)} ${next(value)}`;
+
+  const nextKey =
+    key.type === "StringLiteral"
+      ? JSON.parse(next(key))
+      : next(key);
+
+  return `:${nextKey} ${next(value)}`;
 };
 
 const ObjectExpression = (next, node) =>
