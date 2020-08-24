@@ -1,6 +1,8 @@
 const bt = require("babel-types");
 const t = require("./cljs-types");
 
+const globalObj = (typeof window !== "undefined" ? window : global);
+
 const isComponentElement = n => /^[A-Z]/.test(n);
 
 const flatMap = (fn, coll) =>
@@ -79,7 +81,7 @@ function maybeThreadMemberSyntax(next, node) {
 
     if (
       bt.isIdentifier(node.callee) &&
-      window.hasOwnProperty(node.callee.name)
+      globalObj.hasOwnProperty(node.callee.name)
     ) {
       f = t.symbol(`js/${node.callee.name}`);
     } else {
@@ -116,5 +118,6 @@ module.exports = {
   normalizeOperator,
   maybeThreadMemberSyntax,
   isNestedThisExpression,
-  alterNestedThisExpression
+  alterNestedThisExpression,
+  globalObj
 };

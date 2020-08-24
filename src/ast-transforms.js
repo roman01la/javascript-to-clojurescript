@@ -6,6 +6,8 @@ const utils = require("./utils");
 const jsTypes = require("./ast-types/javascript");
 const jsxTypes = require("./ast-types/jsx");
 
+const { globalObj } = utils;
+
 const {
   DEF,
   FN,
@@ -80,7 +82,7 @@ const Identifier = (next, ast, opts) => {
   if (opts.isCall) {
     return t.symbol(`.${ast.name}`);
   }
-  if (opts.checkGlobal && window.hasOwnProperty(ast.name)) {
+  if (opts.checkGlobal && globalObj.hasOwnProperty(ast.name)) {
     return t.symbol(`js/${ast.name}`);
   }
   return t.symbol(ast.name);
@@ -141,7 +143,7 @@ const CallExpression = (next, ast, opts) => {
   }
 
   if (bt.isMemberExpression(callee)) {
-    if (callee.object.name && window.hasOwnProperty(callee.object.name)) {
+    if (callee.object.name && globalObj.hasOwnProperty(callee.object.name)) {
       const fn = t.symbol(`js/${callee.object.name}`);
       if (isSpreadCall) {
         return t.list([
@@ -166,7 +168,7 @@ const CallExpression = (next, ast, opts) => {
       return t.list([...fn.children, ...ast.arguments.map(next)]);
     }
   }
-  if (window.hasOwnProperty(callee.name)) {
+  if (globalObj.hasOwnProperty(callee.name)) {
     const fn = t.symbol(`js/${callee.name}`);
     if (isSpreadCall) {
       return t.list([t.symbol(".apply"), fn, t.symbol(t.NIL), spreadArgs]);
