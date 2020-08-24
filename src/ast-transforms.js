@@ -574,7 +574,7 @@ const transforms = {
   JSXText
 };
 
-if (true) {
+if (false) {
   const missingJSTypes = jsTypes.filter(
     t => Object.keys(transforms).includes(t) === false
   );
