@@ -37,9 +37,9 @@
 
 (defn ^:export evalExpr
   ([source cb]
-    (cljs/compile-str (cljs/empty-state) source 'cljs.user
-      {:eval cljs/js-eval}
-      (fn [{:keys [error value]}]
-        (if-not error
-          (cb nil value)
-          (cb (.. error -cause -stack)))))))
+   (cljs/compile-str (cljs/empty-state) source 'cljs.user
+     {:eval cljs/js-eval}
+     (fn [{:keys [error value]}]
+       (if-not error
+         (cb nil value)
+         (cb (.. error -cause -stack)))))))
