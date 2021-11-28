@@ -282,12 +282,11 @@ const AssignmentExpression = (next, ast, opts) => {
   return expr;
 };
 
-const NewExpression = (next, ast, opts) =>
-  t.list([
-    t.symbol("new"),
-    next(ast.callee, { isCallExpression: true, checkGlobal: true }),
-    ...ast.arguments.map(next)
-  ]);
+const NewExpression = (next, ast, opts) => t.list([
+  t.symbol("new"),
+  next(ast.callee, { isCallExpression: !bt.isMemberExpression(ast.callee), checkGlobal: true }),
+  ...ast.arguments.map(next)
+]);
 
 const ObjectMethod = (next, ast, opts) =>
   t.ObjectProperty([next(ast.key), FN(next, null, ast.params, ast.body)]);
