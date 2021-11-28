@@ -105,6 +105,7 @@ const handleJSChange = () => {
         console.error(err);
       } else {
         cljsCompiledCodeEditor.setValue(code);
+        updateShareLink();
         window.cljs.user = {};
         try {
           eval(code);
@@ -195,12 +196,19 @@ function decodeLinkedExample(s) {
   return pako.inflate(new Uint8Array(s.split(",")), { to: 'string' });
 }
 
+function updateShareLink() {
+  const compressed = pako.deflate(jsEditor.getValue());
+  window.location.hash = `#share-link=${compressed.join()}`;
+}
+
 function shareCurrentExample() {
   const compressed = pako.deflate(jsEditor.getValue());
-  const shareLink = `https://roman01la.github.io/javascript-to-clojurescript/#share-link=${compressed.join()}`;
+  const hash = `#share-link=${compressed.join()}`;
+  const shareLink = `https://roman01la.github.io/javascript-to-clojurescript/${hash}`;
   navigator.clipboard.writeText(shareLink)
     .then(() => alert("Link copied!"))
-    .catch(() => alert("Couldn't copy the link, please copy it from here\n" + shareLink))
+    .catch(() => alert("Couldn't copy the link, please copy it from here\n" + shareLink));
+  window.location.hash = hash;
 }
 
 document.getElementById("btn-share")
