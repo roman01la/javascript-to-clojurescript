@@ -82,6 +82,12 @@ const RegExpLiteral = ({ pattern, flags }) => ({
 
 // ==========================
 
+const ForOfStatement = () => ({
+  type: "ForOfStatement"
+});
+
+// ==========================
+
 const HashMap = children => ({
   type: "HashMap",
   children
@@ -119,6 +125,8 @@ module.exports = {
   EmptyStatement,
   BreakStatement,
   RegExpLiteral,
+
+  ForOfStatement,
 
   program,
   comment,

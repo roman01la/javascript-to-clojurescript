@@ -519,6 +519,24 @@ const JSXIdentifier = (next, ast, opts) =>
 const JSXText = (next, ast, opts) =>
   ast.value.trim() !== "" ? t.StringLiteral(ast.value) : t.EmptyStatement();
 
+const ForOfStatement = (next, ast, opts) => {
+  const { left, right, body } = ast;
+
+  const bindingLeft = (() => {
+    if (bt.isVariableDeclaration(left)) {
+      return next(left.declarations[0].id)
+    } else {
+      return next(left)
+    }
+  })();
+
+  return t.list([
+    t.symbol("doseq"),
+    t.vector([bindingLeft, next(right)]),
+    next(body)
+  ]);
+}
+
 const transforms = {
   File,
   Program,
@@ -565,6 +583,7 @@ const transforms = {
   SpreadElement,
   SpreadProperty,
   ArrayPattern,
+  ForOfStatement,
 
   JSXExpressionContainer,
   JSXElement,
