@@ -15,7 +15,7 @@
   <body>
     <header class="app-header">
       <div>
-        <span>JavaScript to ClojureScript translator</span>
+        <span>JavaScript to ClojureScript <span class="cljs-version"></span> translator</span>
         <span class="selector">
           <span>Examples:</span>
         </span>
@@ -107,10 +107,11 @@
     <script src="vendor/javascript.js"></script>
     <script src="vendor/clojure.js"></script>
 
-    <script src="https://unpkg.com/react@16.9.0/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@16.9.0/umd/react-dom.production.min.js"></script>
+    <script src="vendor/react.production.min.js"></script>
+    <script src="vendor/react-dom.production.min.js"></script>
 
     <script src="compiler.js "></script>
+    <script>document.querySelector(".cljs-version").innerText = cljs.core._STAR_clojurescript_version_STAR_;</script>
     <script src="bundle.js "></script>
   </body>
 </html>
