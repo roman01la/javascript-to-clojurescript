@@ -285,7 +285,7 @@ const AssignmentExpression = (next, ast, opts) => {
 const NewExpression = (next, ast, opts) =>
   t.list([
     t.symbol("new"),
-    next(ast.callee, { isCallExpression: true }),
+    next(ast.callee, { isCallExpression: true, checkGlobal: true }),
     ...ast.arguments.map(next)
   ]);
 
