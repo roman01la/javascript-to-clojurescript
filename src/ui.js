@@ -1,4 +1,5 @@
 const js2cljs = require("./index");
+const pako = require("pako");
 
 window.html = j2c.core.compileHiccup;
 
@@ -148,9 +149,13 @@ const select = h("select", {}, ...options);
 
 document.querySelector(".selector").append(select);
 
-r(window.location.hash || "basic");
-
-select.value = window.location.hash.replace("#", "") || "basic";
+const shareLink = (window.location.hash.match(/#share-link=([0-9,]+)/) || [])[1];
+if (shareLink) {
+  jsEditor.setValue(decodeLinkedExample(shareLink));
+} else {
+  r(window.location.hash || "basic");
+  select.value = window.location.hash.replace("#", "") || "basic";
+}
 
 select.addEventListener("change", e => {
   const val = e.target.value;
@@ -185,3 +190,18 @@ Array.from(tabs).forEach(btn => {
     });
   });
 });
+
+function decodeLinkedExample(s) {
+  return pako.inflate(new Uint8Array(s.split(",")), { to: 'string' });
+}
+
+function shareCurrentExample() {
+  const compressed = pako.deflate(jsEditor.getValue());
+  const shareLink = `https://roman01la.github.io/javascript-to-clojurescript/#share-link=${compressed.join()}`;
+  navigator.clipboard.writeText(shareLink)
+    .then(() => alert("Link copied!"))
+    .catch(() => alert("Couldn't copy the link, please copy it from here\n" + shareLink))
+}
+
+document.getElementById("btn-share")
+  .addEventListener("click", shareCurrentExample)
