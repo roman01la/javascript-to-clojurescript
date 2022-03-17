@@ -109,6 +109,9 @@ a {
 
 .app-header {
   width: 100%;
+}
+
+#inner-header {
   padding: 8px 16px;
   background: #40a9c2;
   color: #fff;
@@ -133,4 +136,11 @@ a {
 
 .tabs .btn.active {
   font-weight: 600;
+}
+
+#banner {
+  color: #fff;
+  background: #000;
+  padding: 8px 12px;
+  border-radius: 5px;
 }

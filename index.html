@@ -14,22 +14,26 @@
 
   <body>
     <header class="app-header">
-      <div>
-        <span>JavaScript to ClojureScript <span class="cljs-version"></span> translator</span>
-        <span class="selector">
-          <span>Examples:</span>
-        </span>
-        <button class="btn" id="btn-share">Share</button>
+      <p style="background:#005eb8;color:#fff;margin:0;padding:8px;">Russia has invaded Ukraine and already killed thousands of civilians, including more than 105 children. The death toll is still counting. It is a war and we need your help. Let's stand together against the Russian regime.</p>
+      <p style="background:#ffd101;margin:0;padding:16px;"><a id="banner" href="https://stand-with-ukraine.pp.ua/">Support Ukraine</a></p>
+      <div id="inner-header">
+        <div>
+          <span>JavaScript to ClojureScript <span class="cljs-version"></span> translator</span>
+          <span class="selector">
+            <span>Examples:</span>
+          </span>
+          <button class="btn" id="btn-share">Share</button>
+        </div>
+        <div class="tabs">
+          <button class="btn active" id="btn-cljs">ClojureScript</button>
+          <button class="btn" id="btn-ccljs">Compiled ClojureScript</button>
+          <button class="btn" id="btn-console">Console</button>
+          <button class="btn" id="btn-dom">DOM</button>
+        </div>
+        <a href="https://github.com/roman01la/javascript-to-clojurescript"
+          >GitHub</a
+        >
       </div>
-      <div class="tabs">
-        <button class="btn active" id="btn-cljs">ClojureScript</button>
-        <button class="btn" id="btn-ccljs">Compiled ClojureScript</button>
-        <button class="btn" id="btn-console">Console</button>
-        <button class="btn" id="btn-dom">DOM</button>
-      </div>
-      <a href="https://github.com/roman01la/javascript-to-clojurescript"
-        >GitHub</a
-      >
     </header>
 
     <div id="root" class="col">
